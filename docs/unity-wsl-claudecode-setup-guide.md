@@ -1,10 +1,10 @@
-# Unity × Claude Code（Windowsネイティブ主軸）開発環境 セットアップガイド
+# Unity × Claude Code（Windowsネイティブ構成）開発環境 セットアップガイド
 
-**作成日:** 2026年6月25日 ／ **改訂日:** 2026年6月25日（WSL版主軸 → Windowsネイティブ版主軸へ方針転換）
+**作成日:** 2026年6月25日
 
 Windows 11 上に **Unity 6.3 LTS** と **Windows版 Claude Code** をインストールし、両方をWindows内で動かして Unity アプリを開発するためのガイド。WSL版 Claude Code は削除せず、Python / Next.js 等の別スタック用に併存させる。
 
-> **なぜ初版（WSL主軸）から変えたか:** プロジェクト実体を `C:\`（Windows FS）に置くと決めた時点で、WSL版CCは `/mnt/c` 越しのI/O遅延と inotify 不達という構造的不利を常に負う。Unity も unity-mcp も Windows 側にあるため、**CCもWindowsに置けば境界の跨ぎがゼロ**になり、高速・単純・安定になる。
+> **設計方針:** Unity と unity-mcp は Windows 上で動き、プロジェクト実体も `C:\`（Windows のファイルシステム）に置く。**Claude Code も Windows 側に置く**ことで、Windows と WSL の境界を跨がずに済み、高速・単純・安定になる。WSL 版 Claude Code から `/mnt/c` 越しに同じプロジェクトを扱うと、I/O 遅延とファイル変更検知（inotify）の不達という不利を常に負うため、本ガイドでは Claude Code も Windows 版を使う。
 
 ---
 
@@ -39,7 +39,19 @@ flowchart TB
 | Unity アカウント | 取得済み（無料の Personal でも可） |
 | Claude Code サブスク | Pro / Max / Team / Enterprise のいずれか（無料 Claude.ai プランは不可） |
 | Git for Windows | **必須**（git / clone / LFS / ssh。§2 手順3 で導入） |
+| Python（任意） | statusLine（`statusline.py`、§4）を使う場合のみ必要。`winget install Python.Python.3.12` |
+| Node.js（任意） | playwright MCP（§4）や npm 版 CC（§2 代替）を使う場合のみ必要。`winget install OpenJS.NodeJS.LTS` |
 | WSL2 + WSL版CC | 既存のまま残す（他スタック用。本ガイドでは触らない） |
+
+> **実行メモ（このガイドの進め方）:** これは人間が上から順に実施する手順書。PowerShell / git / ssh のシェル手順は Windows 版 Claude Code に実行させてもよいが、**🖐 手動 マークの付いたステップは必ず人間が手で行う**（CC には実行できない）。手動になるのは次のいずれか:
+>
+> - **GUI 操作**（Unity Hub・Unity Editor・インストーラ）
+> - **CC の対話操作**（`/login`・`/plugin` などスラッシュコマンド、TUI 内の選択）
+> - **管理者権限が必要**な操作（CC のシェルは昇格しない）
+> - **ブートストラップ**（CC 本体を入れる §2 自体。CC が使えるようになる前の手順）
+> - **外部 Web 操作**（GitHub に SSH 公開鍵を登録する等）
+>
+> マークの無いシェル手順は CC に任せても手で打ってもよい。
 
 ### なぜ WSL版でなく Windows版 CC か
 
@@ -52,7 +64,9 @@ flowchart TB
 
 ---
 
-## 1. Windows側：Unity のインストール
+## 1. Windows側：Unity のインストール 🖐 手動
+
+> この章は **全ステップが Unity Hub の GUI 操作**のため手動。
 
 1. **Unity Hub を取得** — [unity.com/download](https://unity.com/download) から Unity Hub を入手してインストール。
 2. **サインインとライセンス有効化** — 起動して Unity アカウントでサインイン。`Preferences → Licenses` で Personal 等を有効化。
@@ -67,7 +81,9 @@ flowchart TB
 
 ---
 
-## 2. Windows版 Claude Code のインストール
+## 2. Windows版 Claude Code のインストール 🖐 手動
+
+> この章は **CC を使えるようにするブートストラップ**のため手動（インストーラ実行・Git for Windows の GUI インストール・`/login` 認証を含む）。
 
 1. **PowerShell を開く**（CMD と取り違え注意：プロンプトが `PS C:\...>` ならPowerShell）。
 2. **ネイティブインストーラを実行**（推奨。Node.js不要・管理者権限不要・自動更新）:
@@ -89,6 +105,7 @@ flowchart TB
    ```
    - 補足: Claude Code が **Bash ツール**を使えるのは「追加の利点」。これとは別に、上記 git ツールチェーン自体が必須。Git for Windows 未導入時は CC のシェルが PowerShell になる（v2.1.139 以降はネイティブ PowerShell ツールが標準）。
    - `ssh-agent`（§3）に使う **Windows OpenSSH Client は Windows 11 標準**で導入済み。`ssh -V` で確認できる。
+   - **導入後は PowerShell / Claude Code を再起動**する（既存セッションには `git` が PATH 反映されない）。
 4. **認証と診断** — サブスクのアカウントでサインインし、導入状態を確認:
 
    ```powershell
@@ -137,6 +154,9 @@ mkdir -p /mnt/c/Users/<WinUser>/.ssh
 cp ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub ~/.ssh/known_hosts /mnt/c/Users/<WinUser>/.ssh/
 ```
 
+> これは **WSL の bash** で実行する。Windows 版 Claude Code（PowerShell）から実行させたい場合は `wsl` 経由で呼ぶ:
+> `wsl bash -lc "mkdir -p /mnt/c/Users/<WinUser>/.ssh && cp ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub ~/.ssh/known_hosts /mnt/c/Users/<WinUser>/.ssh/"`
+
 **2. 秘密鍵の ACL を本人のみに制限（PowerShell）** ← 最重要
 
 これを怠ると `Permissions for '...id_ed25519' are too open ... This private key will be ignored.`（UNPROTECTED PRIVATE KEY FILE）で拒否される。`ssh-add` も同じチェックを行うため、**必ず先に実行**する。
@@ -149,7 +169,9 @@ icacls "$env:USERPROFILE\.ssh\id_ed25519" /grant:r "$($env:USERNAME):F"
 - `/inheritance:r` … フォルダから継承した広い権限を断ち切る。
 - `/grant:r "...:F"` … 自分のアカウントだけに Full control を付与（他ユーザー・Everyone を排除）。
 
-**3. ssh-agent を有効化して鍵を登録（管理者 PowerShell）**
+**3. ssh-agent を有効化して鍵を登録（管理者 PowerShell）** 🖐 手動（要管理者）
+
+> サービス操作に**管理者昇格**が必要。CC のシェルは昇格しないため、**管理者として開いた PowerShell** で手で実行する。
 
 ```powershell
 Get-Service ssh-agent | Set-Service -StartupType Automatic
@@ -173,7 +195,7 @@ ssh -T git@github.com    # "Hi <user>! You've successfully authenticated..." が
 ```
 
 > **メモ:**
-> - 秘密鍵はマシン間で持ち回らず、**Windows 用に新しい鍵を生成**して GitHub に公開鍵を登録する運用も安全。その場合は `ssh-keygen -t ed25519 -C "altair@nasubee.com"` を PowerShell で実行し、生成された `.pub` を GitHub の SSH keys に追加する（手順 1・2 のコピーは不要、ACL は ssh-keygen が適切に設定する）。
+> - 秘密鍵はマシン間で持ち回らず、**Windows 用に新しい鍵を生成**して GitHub に公開鍵を登録する運用も安全。その場合は `ssh-keygen -t ed25519 -C "altair@nasubee.com"` を PowerShell で実行し、生成された `.pub` を GitHub の SSH keys に追加する（手順 1・2 のコピーは不要、ACL は ssh-keygen が適切に設定する）。**GitHub への公開鍵登録は Web 操作のため 🖐 手動。**
 > - HTTPS で GitHub を使う場合は Git for Windows 同梱の **Git Credential Manager** が認証を肩代わりするため、SSH 鍵は不要。
 
 ---
@@ -196,15 +218,16 @@ WSL 側 Claude Code には、これまで蓄積したユーザースコープの
 
 ### 手順（Windows・PowerShell）
 
-**1. 再ログイン（トークンはコピーしない）**
+**1. 再ログイン（トークンはコピーしない）** 🖐 手動
 
 ```powershell
 claude            # 起動して /login でサインイン（§2 で導入済みの Windows 版 CC）
 ```
+> `/login` は CC 起動後の**対話操作**のため手動。
 
 **2. `settings.json` を移植**
 
-`%USERPROFILE%\.claude\settings.json` を作成し、下記を貼り付ける（WSL 版とほぼ同一。`statusLine` の Python 実行コマンドだけ Windows 向けに `python` へ調整）:
+`%USERPROFILE%\.claude\settings.json` を作成し、下記を貼り付ける（WSL 版とほぼ同一。`statusLine` の Python 実行コマンドだけ Windows 向けに調整）。**`<WinUser>` は実際の Windows ユーザー名に置換する**:
 
 ```json
 {
@@ -216,7 +239,7 @@ claude            # 起動して /login でサインイン（§2 で導入済み
   "voiceEnabled": true,
   "statusLine": {
     "type": "command",
-    "command": "python \"%USERPROFILE%\\.claude\\statusline.py\"",
+    "command": "python C:\\Users\\<WinUser>\\.claude\\statusline.py",
     "refreshInterval": 60
   },
   "enabledPlugins": {
@@ -224,6 +247,7 @@ claude            # 起動して /login でサインイン（§2 で導入済み
   }
 }
 ```
+- **注意:** `statusLine.command` に **`%USERPROFILE%` や `~` を書かない**（settings.json 内では展開されず statusline が動かない）。上記のように**絶対パス**で書く。導入後にステータスラインが表示されない場合はこのパスを疑う。`python` が PATH に無ければ `py` または絶対パスに置換。
 
 **3. `statusline.py` をコピー**（WSL から）
 
@@ -232,9 +256,9 @@ cp ~/.claude/statusline.py /mnt/c/Users/<WinUser>/.claude/statusline.py
 ```
 - ステータスラインには **Windows 版 Python** が必要（未導入なら `winget install Python.Python.3.12` 等）。Python を入れない場合は手順2の `statusLine` ブロックを削除すればよい。
 
-**4. プラグイン（superpowers）を再インストール**
+**4. プラグイン（superpowers）を再インストール** 🖐 手動
 
-起動中の Claude Code で:
+起動中の Claude Code で（**スラッシュコマンドの対話操作**のため手動）:
 
 ```
 /plugin marketplace add anthropics/claude-plugins-official
@@ -280,7 +304,7 @@ C:\Users\<user>\UnityProjects\<ProjectName>
 
 ### 5-A. 新規プロジェクトを作成
 
-1. Unity Hub の `Projects` →「**New Project**」で Unity 6.3 LTS のテンプレート（2D / 3D / Universal 3D(URP) 等）を選び、上記フォルダに作成。
+1. 🖐 手動: Unity Hub の `Projects` →「**New Project**」で Unity 6.3 LTS のテンプレート（2D / 3D / Universal 3D(URP) 等）を選び、上記フォルダに作成（Unity Hub の GUI 操作）。
 2. Git を初期化（PowerShell、§3 の git 設定が前提）:
 
    ```powershell
@@ -303,7 +327,7 @@ cd <repo>
 git lfs pull                                  # LFS 資産を取得（git lfs install 済みなら clone 時に自動取得）
 ```
 
-- Unity Hub →「**Add → Add project from disk**」でクローンしたフォルダを選び、**一致する Editor バージョン（6.3 LTS）で開く**（New Project ではない）。バージョンが一致しないと Hub が警告するので、必要なら該当 Editor を追加インストール。
+- 🖐 手動: Unity Hub →「**Add → Add project from disk**」でクローンしたフォルダを選び、**一致する Editor バージョン（6.3 LTS）で開く**（New Project ではない。Unity Hub の GUI 操作）。バージョンが一致しないと Hub が警告するので、必要なら該当 Editor を追加インストール。
 
 ### Claude Code で開く（5-A / 5-B 共通）
 
@@ -357,14 +381,16 @@ Windows版CC と WSL版CC は `~/.claude`（= `C:\Users\<user>\.claude` と WSL 
 
 CC が Unity のコンソール・コンパイル結果を直接読めるようにする。**Node.js 等の追加ランタイム不要。** Windows 内ローカル接続なので構成は単純。
 
-1. **Unity 側にパッケージ追加** — `Window → Package Manager → +（左上）→ Add package from git URL` に貼り付け:
+> **手順 1〜3 は Unity Editor の GUI 操作のため 🖐 手動**（CC からは操作できない）。
+
+1. 🖐 手動: **Unity 側にパッケージ追加** — `Window → Package Manager → +（左上）→ Add package from git URL` に貼り付け:
 
    ```
    https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main
    ```
 
-2. **MCP 設定を開く** — `Window → MCP for Unity`。既定ポート `8080` が他サービス（Tailscale 等）と競合する場合は `8090` 等へ変更。
-3. **Claude Code を接続** — クライアント一覧から **Claude Code** を選び `Configure` → `Start Session`。
+2. 🖐 手動: **MCP 設定を開く** — `Window → MCP for Unity`。既定ポート `8080` が他サービス（Tailscale 等）と競合する場合は `8090` 等へ変更。
+3. 🖐 手動: **Claude Code を接続** — クライアント一覧から **Claude Code** を選び `Configure` → `Start Session`。
 4. **接続確認** — PowerShell の Claude Code で:
 
    ```powershell
@@ -427,7 +453,7 @@ flowchart TD
 
 ### 付録：WSL構成（代替案）
 
-どうしても WSL 上の Claude Code で Unity を扱いたい場合は、**プロジェクトを WSL ファイルシステム（`~/`）側に置き**、Unity からは `\\wsl$\<Distro>\home\<user>\...` で参照する。`/mnt/c` を常用する構成（Windows側にプロジェクト＋WSLのCC）は、CC が `/mnt/c` のI/O遅延・inotify不達を負うため非推奨。本ガイドが Windows ネイティブ主軸を採るのはこのため。
+どうしても WSL 上の Claude Code で Unity を扱いたい場合は、**プロジェクトを WSL ファイルシステム（`~/`）側に置き**、Unity からは `\\wsl$\<Distro>\home\<user>\...` で参照する。`/mnt/c` を常用する構成（Windows側にプロジェクト＋WSLのCC）は、CC が `/mnt/c` のI/O遅延・inotify不達を負うため非推奨。本ガイドが Claude Code も Windows 版にしているのはこのため。
 
 ### 参考リンク集
 
