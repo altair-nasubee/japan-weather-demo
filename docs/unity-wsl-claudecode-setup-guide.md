@@ -243,12 +243,35 @@ git lfs pull                                  # LFS 資産を取得（git lfs in
 
 1. **PowerShell を開く**（CMD と取り違え注意：プロンプトが `PS C:\...>` ならPowerShell）。**Windows PowerShell 5.1 / PowerShell 7（`pwsh`）どちらでも可**。Claude Code のネイティブ PowerShell ツールは PowerShell 7 を自動検出するため、**7 を入れているなら 7 を使うのが望ましい**（実体は `powershell.exe` ではなく `pwsh.exe`）。
 2. **ネイティブインストーラを実行**（推奨。Node.js 不要・管理者権限不要・自動更新）:
-  ```powershell
+
+   ```powershell
    irm https://claude.ai/install.ps1 | iex
-  ```
+   ```
+
    バイナリは `C:\Users\<user>\.local\bin\claude.exe`（= `~\.local\bin`）に入る。完了後にバージョン確認:
-   `claude` が見つからない場合（インストーラが「`...\.local\bin` is not in your PATH」と表示することがある）は、この場所を **User PATH に追加してターミナルを再起動**する:
-   その後 PowerShell を開き直して `claude --version` を再確認する（新しいセッションで PATH が反映される）。**バージョンが出れば §5 は完了。ログインは §6 まで行わない。**
+
+   ```powershell
+   claude --version
+   ```
+
+3. **`claude` を PATH に追加**（インストーラが「`...\.local\bin` is not in your PATH」と表示した場合、または手順2で `claude` が見つからない場合に必要）— `~\.local\bin` を **User PATH に永続追加**する:
+
+   ```powershell
+   # User PATH に .local\bin を永続追加（重複時はスキップ）
+   $bin = "$env:USERPROFILE\.local\bin"
+   $userPath = [Environment]::GetEnvironmentVariable("Path","User")
+   if ($userPath -notlike "*$bin*") {
+     [Environment]::SetEnvironmentVariable("Path", ($userPath.TrimEnd(';') + ";" + $bin), "User")
+   }
+   ```
+
+   追加したら **PowerShell を開き直して**（新しいセッションで PATH が反映される）、再確認:
+
+   ```powershell
+   claude --version
+   ```
+
+   **バージョンが出れば §5 は完了。ログイン（対話起動）は §6 まで行わない。**
 
 ### つまずきやすい点
 
