@@ -538,6 +538,47 @@ git add UnityProject/ --dry-run
 
 追跡対象として想定されるのは `Assets/`・`Packages/`・`ProjectSettings/`・`UnityProject/.gitignore`・`UnityProject/.vsconfig` のみ。
 
+**8-0-5. `.gitattributes` を作成して LFS を設定（PowerShell）**
+
+テクスチャ・音声・3D モデル等のバイナリアセットを Git LFS で管理するため、リポジトリルートに `.gitattributes` を作成する。Unity YAML（シーン・プレハブ等）はテキストとして扱い、バイナリのみ LFS に振り分ける構成:
+
+```powershell
+# リポジトリルートで実行
+# 下記の内容で .gitattributes を作成する（エディタで直接作成してもよい）
+```
+
+`.gitattributes` の主な設定内容:
+
+| 種別 | 拡張子 | 扱い |
+| ---- | ------ | ---- |
+| C# スクリプト | `.cs` | テキスト（LF） |
+| Unity YAML | `.unity` `.prefab` `.mat` `.asset` `.anim` 等 | テキスト（LF） |
+| シェーダー | `.shader` `.hlsl` `.compute` `.shadergraph` 等 | テキスト（LF） |
+| テクスチャ | `.png` `.jpg` `.tga` `.exr` `.hdr` `.psd` 等 | **LFS** |
+| オーディオ | `.wav` `.mp3` `.ogg` `.aif` 等 | **LFS** |
+| 3D モデル | `.fbx` `.obj` `.blend` `.dae` 等 | **LFS** |
+| ビデオ | `.mp4` `.mov` `.avi` `.webm` | **LFS** |
+| フォント | `.ttf` `.otf` | **LFS** |
+| HDRP ボリューメトリクス | `.vdb` | **LFS** |
+
+**8-0-6. コミット済みバイナリの LFS 変換確認（PowerShell）**
+
+`.gitattributes` 設定前にコミット済みのバイナリファイルは自動では LFS に変換されない。確認コマンド:
+
+```powershell
+git ls-files | Select-String -Pattern "\.(png|jpg|jpeg|tga|psd|tif|tiff|exr|hdr|bmp|gif|mp3|wav|ogg|aif|flac|fbx|obj|blend|mp4|mov|ttf|otf|vdb)$"
+```
+
+該当ファイルが出た場合の対処:
+- **サイズが小さい・不要なアセット（チュートリアル素材等）** → `git rm -r` で削除する（推奨）
+- **必要なアセットで数が多い** → `git lfs migrate import --include="*.png,*.fbx,..."` で履歴ごと変換（要注意：履歴の書き換えが発生する）
+
+> **HDRP テンプレートの TutorialInfo フォルダについて:** High Definition 3D テンプレートには `Assets/TutorialInfo/` という開発に不要なチュートリアルアセット（PNG アイコン等）が含まれる。初回コミット前または直後に削除しておくとよい:
+> ```powershell
+> git rm -r UnityProject/Assets/TutorialInfo
+> git rm UnityProject/Assets/TutorialInfo.meta
+> ```
+
 ### 8-1 〜 8-5. unity-mcp のインストールと接続
 
 8-1. 【手動】 **Unity 側にパッケージ追加** — `Window → Package Manager → +（左上）→ Add package from git URL` に貼り付け:
