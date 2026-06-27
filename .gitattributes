@@ -1,0 +1,81 @@
+# テキストファイルの改行を自動正規化
+* text=auto
+
+# C# スクリプト
+*.cs text eol=lf diff=csharp
+
+# Unity YAML（シーン・プレハブ・マテリアル等）— テキストとして扱う
+*.unity text eol=lf
+*.prefab text eol=lf
+*.asset text eol=lf
+*.mat text eol=lf
+*.anim text eol=lf
+*.controller text eol=lf
+*.overrideController text eol=lf
+*.mask text eol=lf
+*.physicsMaterial2D text eol=lf
+*.physicMaterial text eol=lf
+*.flare text eol=lf
+*.fontsettings text eol=lf
+*.giparams text eol=lf
+*.guiskin text eol=lf
+*.inputactions text eol=lf
+*.meta text eol=lf
+
+# シェーダー
+*.shader text eol=lf
+*.cginc text eol=lf
+*.hlsl text eol=lf
+*.glsl text eol=lf
+*.compute text eol=lf
+*.shadergraph text eol=lf
+*.shadersubgraph text eol=lf
+
+# ---- LFS: バイナリアセット ----
+
+# テクスチャ
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.tga filter=lfs diff=lfs merge=lfs -text
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.tif filter=lfs diff=lfs merge=lfs -text
+*.tiff filter=lfs diff=lfs merge=lfs -text
+*.exr filter=lfs diff=lfs merge=lfs -text
+*.hdr filter=lfs diff=lfs merge=lfs -text
+*.bmp filter=lfs diff=lfs merge=lfs -text
+*.gif filter=lfs diff=lfs merge=lfs -text
+
+# オーディオ
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.ogg filter=lfs diff=lfs merge=lfs -text
+*.aif filter=lfs diff=lfs merge=lfs -text
+*.aiff filter=lfs diff=lfs merge=lfs -text
+*.flac filter=lfs diff=lfs merge=lfs -text
+
+# 3D モデル
+*.fbx filter=lfs diff=lfs merge=lfs -text
+*.FBX filter=lfs diff=lfs merge=lfs -text
+*.obj filter=lfs diff=lfs merge=lfs -text
+*.blend filter=lfs diff=lfs merge=lfs -text
+*.dae filter=lfs diff=lfs merge=lfs -text
+*.3ds filter=lfs diff=lfs merge=lfs -text
+*.mb filter=lfs diff=lfs merge=lfs -text
+*.ma filter=lfs diff=lfs merge=lfs -text
+
+# ビデオ
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.avi filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+
+# フォント
+*.ttf filter=lfs diff=lfs merge=lfs -text
+*.otf filter=lfs diff=lfs merge=lfs -text
+
+# Unity パッケージ
+*.unitypackage filter=lfs diff=lfs merge=lfs -text
+
+# HDRP: ボリューメトリクス用 VDB
+*.vdb filter=lfs diff=lfs merge=lfs -text
