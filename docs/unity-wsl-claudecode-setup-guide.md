@@ -681,6 +681,8 @@ flowchart TD
 | **context7 MCP の API キー間違い** | `claude mcp remove context7 --scope user` で削除後、正しいキーで `claude mcp add` を再実行 |
 | **Unity 終了時に Stop Server は必要か** | 不要。Unity を普通に終了すれば MCP サーバーも自動停止する。CC がコマンド実行中に Unity を終了した場合は接続エラーが出ることがあるが、CC を再起動すれば回復する |
 | **Unity 起動のたびに Start Server を押す必要があるか** | `Window → MCP for Unity → Toggle MCP Window → Advanced タブ` で **「Auto-Start Server on Editor Load」にチェック**を入れると次回以降は自動起動する |
+| **Cursor / VS Code 統合ターミナルでコピペが文字化けする（日本語が `ã®` 等になる）** | ConPTY バックエンドがクリップボードへ UTF-16 でなく ANSI バイトとして格納するバグ。Cursor: `%APPDATA%\Cursor\User\settings.json`、VS Code: `%APPDATA%\Code\User\settings.json` に `"terminal.integrated.gpuAcceleration": "off"` と `"terminal.integrated.windowsEnableConpty": false` を追加して再起動する。WSL Remote 経由の VS Code では発生しない |
+| **PowerShell で日本語出力が文字化けする** | PowerShell プロファイル（`$PROFILE` = `C:\Users\<user>\Documents\PowerShell\Microsoft.PowerShell_profile.ps1`）に次の3行を追加: `$OutputEncoding = [System.Text.Encoding]::UTF8` / `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8` / `[Console]::InputEncoding = [System.Text.Encoding]::UTF8` |
 
 
 ### Claude Code の使い分け（このマシンの方針）
