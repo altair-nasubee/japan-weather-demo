@@ -456,7 +456,72 @@ Windows版CC と WSL版CC は `~/.claude`（= `C:\Users\<user>\.claude` と WSL 
 
 CC が Unity のコンソール・コンパイル結果を直接読めるようにする。**Node.js 等の追加ランタイム不要。** Windows 内ローカル接続なので構成は単純。
 
-> **手順 1〜3 は Unity Editor の GUI 操作のため 【手動】**（CC からは操作できない）。
+> **手順はすべて Unity Editor の GUI 操作のため 【手動】**（CC からは操作できない）。
+
+### 8-0. 前提：Unity プロジェクトの準備 【手動】
+
+unity-mcp は **Unity Editor でプロジェクトが開かれている状態**で機能する。
+
+**フォルダ構成の方針（推奨）**
+
+git リポジトリのルートに `CLAUDE.md`・`docs/` 等が既にある場合、Unity プロジェクトはサブフォルダに分けるのが整理しやすい:
+
+```
+C:\work\<repo>\
+├── CLAUDE.md
+├── docs/
+├── .gitignore          ← リポジトリ全体の除外（Windows OS ファイル等）
+└── UnityProject\       ← Unity Hub の「保存場所」に <repo>、「プロジェクト名」に UnityProject を指定
+    ├── .gitignore      ← Unity 固有の除外（Library/ Temp/ 等）
+    ├── Assets\
+    ├── Packages\
+    └── ProjectSettings\
+```
+
+**8-0-1. `.gitignore` を準備する（PowerShell）**
+
+リポジトリルートの `.gitignore` に Unity 固有パターン（`/[Ll]ibrary/` 等）を書いても、Unity がサブフォルダにある場合は**効かない**。Unity サブフォルダ直下に専用 `.gitignore` を作成する必要がある。
+
+```powershell
+# Unity プロジェクトのサブフォルダ内に Unity 用 .gitignore を作成
+irm https://raw.githubusercontent.com/github/gitignore/main/Unity.gitignore -OutFile UnityProject\.gitignore
+```
+
+リポジトリルートの `.gitignore` には Windows OS ファイルと Cursor エディタキャッシュを追加しておく:
+
+```
+# Windows OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Cursor editor cache
+.cursor/
+```
+
+**8-0-2. Unity プロジェクトを作成する【手動】**
+
+- **新規プロジェクトを作成する場合** — Unity Hub の `Projects →「New Project」` を開く。
+  - エディターバージョン: **6000.3.x LTS**
+  - テンプレート: **High Definition 3D**（レイトレーシング・ボリューメトリッククラウド等に対応した HDRP テンプレート）
+  - プロジェクト名: `UnityProject`（任意）
+  - 保存場所: `C:\work\<repo>`（リポジトリルート）
+  - → 「プロジェクトを作成」後、`<repo>\UnityProject\` に Unity 一式が生成される。
+
+- **既存の Unity プロジェクトを Clone 済みの場合** — Unity Hub の `Projects →「Add → Add project from disk」` で該当フォルダを追加し、対応する Editor バージョンで開く。
+
+**8-0-3. `git status` で除外漏れを確認（PowerShell）**
+
+Unity Editor が初回コンパイルを終えたら、追跡対象が想定どおりか確認する:
+
+```powershell
+git status
+```
+
+`Library/`・`Temp/`・`Logs/`・`UserSettings/`・`.vs/`・`*.csproj`・`*.slnx` が **Untracked files に出ていなければ** `.gitignore` が正しく効いている。もし出ていたら `UnityProject\.gitignore` が存在するか確認する。
+
+### 8-1 〜 8-5. unity-mcp のインストールと接続
 
 8-1. 【手動】 **Unity 側にパッケージ追加** — `Window → Package Manager → +（左上）→ Add package from git URL` に貼り付け:
   ```
