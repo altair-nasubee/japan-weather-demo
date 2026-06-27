@@ -456,7 +456,7 @@ Windows版CC と WSL版CC は `~/.claude`（= `C:\Users\<user>\.claude` と WSL 
 
 CC が Unity のコンソール・コンパイル結果を直接読めるようにする。**Node.js 等の追加ランタイム不要。** Windows 内ローカル接続なので構成は単純。
 
-> **手順はすべて Unity Editor の GUI 操作のため 【手動】**（CC からは操作できない）。
+> **§8-0〜§8-2 は Unity Editor の GUI 操作のため 【手動】**。§8-3 以降は PowerShell / CC で実行。
 
 ### 8-0. 前提：Unity プロジェクトの準備 【手動】
 
@@ -511,15 +511,32 @@ $RECYCLE.BIN/
 
 - **既存の Unity プロジェクトを Clone 済みの場合** — Unity Hub の `Projects →「Add → Add project from disk」` で該当フォルダを追加し、対応する Editor バージョンで開く。
 
-**8-0-3. `git status` で除外漏れを確認（PowerShell）**
+**8-0-3. HDRP Wizard への対応【手動】**
 
-Unity Editor が初回コンパイルを終えたら、追跡対象が想定どおりか確認する:
+High Definition 3D テンプレートで新規プロジェクトを作成すると、Unity 起動時に **HDRP Wizard** が自動表示される。各セクションの対応は以下のとおり。
+
+| セクション | 状態 | 対応 |
+| -------- | ---- | ---- |
+| **HDRP**（Global / Current Quality） | 全項目グリーン ✅ | 何もしない |
+| **VR** | XR パッケージ未インストールのエラー ❌ | **Fix しない**（VR 非対応アプリのため不要） |
+| **DXR**（レイトレーシング） | Graphics Settings はグリーン、Asset 設定に黄色警告 ⚠️ | 今は無視。天候エフェクト実装フェーズで有効化する |
+| **Project Migration Quick-links** | Built-in マテリアルに関する警告 | **「Convert All Built-in Materials to HDRP」をクリック** |
+
+操作後、ウィザードを閉じる。右上の「Show on start」チェックを外すと次回起動時に自動表示されなくなる（任意）。
+
+> **DXR 警告の補足:** 「Screen Space Shadows / Reflection / Visual Effects Ray Tracing が HDRP High Fidelity プリセットで無効」という警告。レイトレーシングを使う際は HDRP Asset（`Assets/Settings/HDRPDefaultResources/HDRenderPipelineAsset.asset`）で該当機能を有効化する。順序は「DXR Activated → Screen Space Shadows → Screen Space Reflection → Visual Effects Ray Tracing」の依存関係があるため、上から順に有効化すること。
+
+**8-0-4. `.gitignore` の動作確認（PowerShell）**
+
+Unity Editor が初回コンパイルを終えたら、ドライランで実際にステージされるファイルを確認する:
 
 ```powershell
-git status
+git add UnityProject/ --dry-run
 ```
 
-`Library/`・`Temp/`・`Logs/`・`UserSettings/`・`.vs/`・`*.csproj`・`*.slnx` が **Untracked files に出ていなければ** `.gitignore` が正しく効いている。もし出ていたら `UnityProject\.gitignore` が存在するか確認する。
+出力に `Library/`・`Temp/`・`Logs/`・`UserSettings/`・`*.csproj`・`*.slnx` が**出ていなければ** `.gitignore` が正しく効いている。出ていた場合は `UnityProject\.gitignore` が存在するか確認する。
+
+追跡対象として想定されるのは `Assets/`・`Packages/`・`ProjectSettings/`・`UnityProject/.gitignore`・`UnityProject/.vsconfig` のみ。
 
 ### 8-1 〜 8-5. unity-mcp のインストールと接続
 
@@ -527,14 +544,47 @@ git status
   ```
    https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main
   ```
-8-2. 【手動】 **MCP 設定を開く** — `Window → MCP for Unity`。既定ポート `8080` が他サービス（Tailscale 等）と競合する場合は `8090` 等へ変更。
-8-3. 【手動】 **Claude Code を接続** — クライアント一覧から **Claude Code** を選び `Configure` → `Start Session`。
-8-4. **接続確認** — 作業フォルダ内の Claude Code で:
+  インストール完了後に **MCP for Unity Setup** ダイアログが自動表示される。2段階で進む:
+
+  **① System Requirements の確認**
+  不足しているものを winget でインストールし、「Refresh」で再確認。両方グリーンになったら「Done」をクリック。
+
+  | 項目 | インストールコマンド（未導入の場合） |
+  | ---- | ------------------------------------ |
+  | Python 3.10+ | `winget install Python.Python.3.12` |
+  | UV Package Manager | `winget install astral-sh.uv` |
+
+  **② Configure MCP Clients**
+  「Done」後に自動でこの画面に切り替わる。マシン上の MCP クライアントが一覧表示されるので、**Claude Code のみチェックを残して**他を外し、「**Configure Selected**」をクリック。
+
+  > このステップで Claude Code の MCP 設定ファイルに unity-mcp サーバーが自動登録される。
+
+8-2. 【手動】 **MCP ウィンドウを開いてサーバーを起動** — `Window → MCP for Unity → Toggle MCP Window`。
+
+  **Server セクション:**
+  - Transport: **HTTP Local**、HTTP URL: `http://127.0.0.1:8080` を確認（ポート競合時は `8090` 等へ変更）。
+  - 「**Start Server**」をクリック → ● **Session Active (UnityProject)** とグリーン表示になれば起動成功。
+
+  **Client Configuration セクション:**
+  - Client ドロップダウンで「**Claude Code**」を選択し、● **Configured**（グリーン）になっていることを確認。「Not Configured」の場合は「**Configure**」をクリック。
+  - 「**Install Skills**」をクリック（CC が Unity 操作に使うスキルが追加される）。
+
+  **Auto-Start の設定（推奨）:**
+  「**Advanced**」タブを開き、**「Auto-Start Server on Editor Load」にチェック**を入れる。次回以降の Unity 起動時に MCP サーバーが自動起動するようになる。
+
+8-3. **接続確認** — 作業フォルダ内の Claude Code で:
   ```powershell
-   claude mcp list    # 登録一覧
+  claude mcp list
   ```
-   起動中の CC では `/mcp` で状態確認。
-8-5. **動作確認プロンプト例:**
+  以下のように `UnityMCP` が Connected になっていれば完了:
+  ```
+  context7:   https://mcp.context7.com/mcp (HTTP)              - √ Connected
+  playwright: npx @playwright/mcp@latest --browser chromium    - √ Connected
+  UnityMCP:   http://127.0.0.1:8080/mcp (HTTP)                - √ Connected
+  ```
+  起動中の CC では `/mcp` で状態確認。
+
+8-4. **動作確認プロンプト例:**
   - 「現在のシーンに赤・青・黄のキューブを作成して」
   - 「コンソールのエラーを読んで、原因のスクリプトを修正して」
 
@@ -588,6 +638,8 @@ flowchart TD
 | **statusline.py で UnicodeEncodeError** | Windows の Python がデフォルトの cp932 で絵文字を出力しようとして失敗。スクリプト冒頭に `import io; sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')` を追加する（§6-4） |
 | **playwright `Browser is not installed`** | `npx playwright install chromium` でなく `npx @playwright/mcp@latest install-browser chrome-for-testing` でインストールする。MCP のビルド番号と合わせるため（§6-6） |
 | **context7 MCP の API キー間違い** | `claude mcp remove context7 --scope user` で削除後、正しいキーで `claude mcp add` を再実行 |
+| **Unity 終了時に Stop Server は必要か** | 不要。Unity を普通に終了すれば MCP サーバーも自動停止する。CC がコマンド実行中に Unity を終了した場合は接続エラーが出ることがあるが、CC を再起動すれば回復する |
+| **Unity 起動のたびに Start Server を押す必要があるか** | `Window → MCP for Unity → Toggle MCP Window → Advanced タブ` で **「Auto-Start Server on Editor Load」にチェック**を入れると次回以降は自動起動する |
 
 
 ### Claude Code の使い分け（このマシンの方針）
