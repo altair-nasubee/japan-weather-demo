@@ -113,3 +113,7 @@ $RECYCLE.BIN/
 
 # Cursor editor cache
 .cursor/
+
+# OpenWeatherMap API key (do not commit)
+UnityProject/Assets/StreamingAssets/config.json
+UnityProject/Assets/StreamingAssets/config.json.meta
