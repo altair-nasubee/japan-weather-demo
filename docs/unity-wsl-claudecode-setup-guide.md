@@ -707,7 +707,8 @@ flowchart TD
 | **context7 MCP の API キー間違い** | `claude mcp remove context7 --scope user` で削除後、正しいキーで `claude mcp add` を再実行 |
 | **Unity 終了時に Stop Server は必要か** | 不要。Unity を普通に終了すれば MCP サーバーも自動停止する。CC がコマンド実行中に Unity を終了した場合は接続エラーが出ることがあるが、CC を再起動すれば回復する |
 | **Unity 起動のたびに Start Server を押す必要があるか** | `Window → MCP for Unity → Toggle MCP Window → Advanced タブ` で **「Auto-Start Server on Editor Load」にチェック**を入れると次回以降は自動起動する |
-| **Cursor / VS Code 統合ターミナルでコピペが文字化けする（日本語が `ã®` 等になる）** | ConPTY バックエンドがクリップボードへ UTF-16 でなく ANSI バイトとして格納するバグ。Cursor: `%APPDATA%\Cursor\User\settings.json`、VS Code: `%APPDATA%\Code\User\settings.json` に `"terminal.integrated.gpuAcceleration": "off"` と `"terminal.integrated.windowsEnableConpty": false` を追加して再起動する。WSL Remote 経由の VS Code では発生しない |
+| **Cursor / VS Code 統合ターミナルでコピペが文字化けする（日本語が `ã®` 等になる）** | ConPTY バックエンドのバグ（旧バージョン）。**まず Cursor / VS Code を最新版にアップデートする**（多くの場合これだけで解消）。解消しない場合のみ `%APPDATA%\Cursor\User\settings.json` に `"terminal.integrated.gpuAcceleration": "off"` を追加して再起動する。**`"terminal.integrated.windowsEnableConpty": false` は設定しない**（旧来の回避策。ConPTY は最新ターミナル描画に必要なので無効化しない）。WSL Remote 経由の VS Code では発生しない |
+| **Claude 起動画面の入力欄が角丸ボックス（`╭─╮ │ ╰─╯`）でなく横罫線2本で表示される** | **不具合ではなく Windows 版 Claude Code の描画仕様**。機能には一切影響しない。フォント・ターミナルの問題と誤認しやすいが、`Write-Host ([char]0x256D + [string]([char]0x2500)*3 + [char]0x256E)` で `╭───╮` が表示でき、かつ Windows Terminal で起動している（`$env:WT_SESSION` に値がある）なら描画環境は正常。フォントやターミナル設定を変更しても角丸ボックスにはならないので、追わなくてよい |
 | **PowerShell で日本語出力が文字化けする** | PowerShell プロファイル（`$PROFILE` = `C:\Users\<user>\Documents\PowerShell\Microsoft.PowerShell_profile.ps1`）に次の3行を追加: `$OutputEncoding = [System.Text.Encoding]::UTF8` / `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8` / `[Console]::InputEncoding = [System.Text.Encoding]::UTF8` |
 
 
