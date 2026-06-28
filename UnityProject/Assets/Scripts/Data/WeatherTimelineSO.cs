@@ -1,3 +1,5 @@
+using JapanWeatherDemo.Weather;
+using System;
 using System;
 using UnityEngine;
 
@@ -31,5 +33,18 @@ namespace JapanWeatherDemo.Data
             currentIndex = Mathf.Clamp(index, 0, snapshots.Length - 1);
             OnSnapshotChanged?.Invoke(snapshots[currentIndex]);
         }
+
+        /// <summary>連续位置(0〜 Count-1)から補間したスナップショットを発火する。</summary>
+        public void SetContinuousIndex(float pos)
+        {
+            if (Count == 0) return;
+            pos = Mathf.Clamp(pos, 0f, snapshots.Length - 1);
+            int i = Mathf.FloorToInt(pos);
+            int next = Mathf.Min(i + 1, snapshots.Length - 1);
+            float frac = pos - i;
+            currentIndex = Mathf.RoundToInt(pos);
+            OnSnapshotChanged?.Invoke(SnapshotInterpolator.Lerp(snapshots[i], snapshots[next], frac));
+        }
+
     }
 }

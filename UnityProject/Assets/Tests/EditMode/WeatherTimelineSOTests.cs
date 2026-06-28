@@ -49,5 +49,32 @@ namespace JapanWeatherDemo.Tests
             so.SetData("東京", new[] { Snap(1f), Snap(2f) });
             Assert.AreEqual(2, so.Count);
         }
+
+        [Test]
+        public void SetContinuousIndex_InterpolatesBetweenSnapshots()
+        {
+            var so = ScriptableObject.CreateInstance<WeatherTimelineSO>();
+            so.SetData("東京", new[] { Snap(10f), Snap(20f) });
+            WeatherSnapshot? got = null;
+            so.OnSnapshotChanged += s => got = s;
+
+            so.SetContinuousIndex(0.5f);
+
+            Assert.AreEqual(15f, got.Value.temperatureCelsius, 1e-3f);
+        }
+
+        [Test]
+        public void SetContinuousIndex_ClampsToRange()
+        {
+            var so = ScriptableObject.CreateInstance<WeatherTimelineSO>();
+            so.SetData("東京", new[] { Snap(10f), Snap(20f) });
+            WeatherSnapshot? got = null;
+            so.OnSnapshotChanged += s => got = s;
+
+            so.SetContinuousIndex(5f);
+
+            Assert.AreEqual(20f, got.Value.temperatureCelsius, 1e-3f);
+        }
+
     }
 }

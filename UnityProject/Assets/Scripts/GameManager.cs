@@ -3,6 +3,8 @@ using UnityEngine;
 using JapanWeatherDemo.Data;
 using JapanWeatherDemo.Map;
 using JapanWeatherDemo.Weather;
+using JapanWeatherDemo.UI;
+using JapanWeatherDemo.Weather;
 
 namespace JapanWeatherDemo
 {
@@ -12,6 +14,8 @@ namespace JapanWeatherDemo
         [SerializeField] private MapManager mapManager;
         [SerializeField] private WeatherService weatherService;
         [SerializeField] private string initialCityName = "東京";
+        [SerializeField] private TimelineUIController timelineUI;
+[SerializeField] private string initialCityName = "東京";
 
         public WeatherTimelineSO Timeline { get; private set; }
         public event Action<string> StatusMessage;
@@ -44,6 +48,7 @@ namespace JapanWeatherDemo
                 snaps =>
                 {
                     Timeline.SetData(city.name, snaps);
+                    if (timelineUI != null) timelineUI.ConfigureForCurrentData();
                     Debug.Log($"[GameManager] {city.name}: {snaps.Length} snapshots loaded");
                 },
                 error => StatusMessage?.Invoke(error));
