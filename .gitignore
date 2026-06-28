@@ -117,3 +117,6 @@ $RECYCLE.BIN/
 # OpenWeatherMap API key (do not commit)
 UnityProject/Assets/StreamingAssets/config.json
 UnityProject/Assets/StreamingAssets/config.json.meta
+
+# SDD progress ledger (local scratch)
+.superpowers/

@@ -4,7 +4,6 @@ using JapanWeatherDemo.Data;
 using JapanWeatherDemo.Map;
 using JapanWeatherDemo.Weather;
 using JapanWeatherDemo.UI;
-using JapanWeatherDemo.Weather;
 
 namespace JapanWeatherDemo
 {
@@ -15,12 +14,10 @@ namespace JapanWeatherDemo
         [SerializeField] private WeatherService weatherService;
         [SerializeField] private string initialCityName = "東京";
         [SerializeField] private TimelineUIController timelineUI;
-[SerializeField] private string initialCityName = "東京";
 
         public WeatherTimelineSO Timeline { get; private set; }
         public event Action<string> StatusMessage;
         public event Action<bool> LoadingChanged;
-public event Action<string> StatusMessage;
 
         private void Awake()
         {
