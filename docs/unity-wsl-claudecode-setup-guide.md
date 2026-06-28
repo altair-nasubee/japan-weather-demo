@@ -646,6 +646,32 @@ git ls-files | Select-String -Pattern "\.(png|jpg|jpeg|tga|psd|tif|tiff|exr|hdr|
 
 ## 9. 開発ワークフロー（推奨ループ）
 
+### 9-1. 日々の開発の手順
+- UnityHubを起動し、該当のプロジェクトを開く（自動的に MCP for Unity も起動する）
+- PowerShell7 を開き、該当のプロジェクトフォルダ内で Cursor もしくは VS Code を起動
+```powershell
+cd C:\work\<repo>   # ← §4 でClone/作成した作業フォルダ。Claude は System32 等のフォルダでは起動しないようにすること
+
+# Cursor を起動
+cursor .
+
+# もしくは VS Code を起動
+code .
+```
+- IDE (Cursor or VS Code) 内のターミナルで Claude Code を起動
+```powershell
+# Claude Code のバージョン更新
+clude update
+claude --version
+
+# Claude Code 起動
+claude
+```
+
+- あとは Claude Code に実装を指示して作業を進める
+
+
+### 9-2. Claude Code を使用した開発の流れ
 ```mermaid
 flowchart TD
     A["① Claude Code でスクリプトを編集"] --> B["② unity-mcp 経由で Unity に<br/>コンパイルさせ、コンソール出力を取得"]
