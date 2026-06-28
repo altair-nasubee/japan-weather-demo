@@ -19,6 +19,8 @@ namespace JapanWeatherDemo
 
         public WeatherTimelineSO Timeline { get; private set; }
         public event Action<string> StatusMessage;
+        public event Action<bool> LoadingChanged;
+public event Action<string> StatusMessage;
 
         private void Awake()
         {
@@ -43,15 +45,20 @@ namespace JapanWeatherDemo
 
         private void SelectCity(CityData city)
         {
+            LoadingChanged?.Invoke(true);
             weatherService.FetchForecast(
                 city,
                 snaps =>
                 {
                     Timeline.SetData(city.name, snaps);
                     if (timelineUI != null) timelineUI.ConfigureForCurrentData();
-                    Debug.Log($"[GameManager] {city.name}: {snaps.Length} snapshots loaded");
+                    LoadingChanged?.Invoke(false);
                 },
-                error => StatusMessage?.Invoke(error));
+                error =>
+                {
+                    StatusMessage?.Invoke(error);
+                    LoadingChanged?.Invoke(false);
+                });
         }
     }
 }
