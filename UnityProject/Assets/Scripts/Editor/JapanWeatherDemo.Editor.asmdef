@@ -1,0 +1,16 @@
+{
+  "name": "JapanWeatherDemo.Editor",
+  "rootNamespace": "JapanWeatherDemo.Editor",
+  "references": [
+    "JapanWeatherDemo"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": true
+}
