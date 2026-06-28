@@ -128,6 +128,26 @@ MainScene
 
 ---
 
+## 地図と座標系
+
+### 投影方式
+
+**線形（等緯度経度）マッピング。** 日本のバウンディングボックスを地図 Plane の XZ 平面に線形変換する。フラットな地図テクスチャと相性が良く、デモ用途には十分。
+
+- 緯度経度の範囲（暫定）：`lat 24〜46` / `lon 123〜146`（沖縄〜北海道を含む）。
+- 使用する地図テクスチャの実際の図郭に合わせて範囲は微調整する（未決：テクスチャ素材確定後）。
+
+```
+x = Mathf.Lerp(planeMinX, planeMaxX, Mathf.InverseLerp(lonMin, lonMax, city.lon));
+z = Mathf.Lerp(planeMinZ, planeMaxZ, Mathf.InverseLerp(latMin, latMax, city.lat));
+y = マーカー高さ（地図 Plane 上に浮かせる固定オフセット）
+```
+
+- 変換ロジックは純粋関数として切り出し、EditMode 単体テストで緯度経度→XZ の対応を検証する。
+- 地図テクスチャの図郭（範囲）とマーカー座標は必ず同じ範囲定数を共有させ、ズレを防ぐ。
+
+---
+
 ## データ設計
 
 ### WeatherTimelineSO
@@ -155,7 +175,7 @@ public class WeatherTimelineSO : ScriptableObject
 [Serializable]
 public struct WeatherSnapshot
 {
-    public DateTime dateTime;
+    public DateTime dateTime;            // JST（UTC+9 に変換済み）
     public WeatherCondition condition;   // Clear / Cloudy / Rain / Storm / Snow
     public float cloudCoverage;          // 0〜1
     public float windSpeed;              // m/s
@@ -240,14 +260,86 @@ public struct WeatherSnapshot
 
 ## 天気 API
 
-**エンドポイント（5 日間予報）：**
+**エンドポイント（5 日間・3 時間刻み予報）：**
 ```
 GET https://api.openweathermap.org/data/2.5/forecast
-    ?q={city_name},{JP}&appid={API_KEY}&units=metric&cnt=40
+    ?lat={lat}&lon={lon}&appid={API_KEY}&units=metric&cnt=40
 ```
 
-- 無料枠：1,000 リクエスト/日（クレジットカード登録不要）
-- API キーは Unity の StreamingAssets または環境変数で管理（ソースコードに直書きしない）
+- **座標指定（`lat`/`lon`）を使う。** 都市名 `q` 指定は非推奨（deprecated）で、日本語都市名のヒット精度も不安定なため使わない。`Cities.json` が保持する緯度経度をそのまま渡す。
+- 無料枠：1,000 リクエスト/日（クレジットカード登録不要）。都市選択 1 回 = 1 リクエスト。
+- 同一都市を再選択した場合は直近取得結果をメモリキャッシュして無駄なリクエストを避ける（簡易キャッシュ、有効期限の厳密管理は不要）。
+- API キーは Unity の StreamingAssets または環境変数で管理（ソースコードに直書きしない）。
+
+### タイムゾーン処理
+
+- API の `dt` は **UTC**、レスポンスの `city.timezone` に UTC オフセット秒が入る。
+- 日本向けデモのため、`WeatherSnapshot.dateTime` および UI 表示はすべて **JST（UTC+9）** に変換して扱う。
+
+### 天気コード → WeatherCondition 対応
+
+OpenWeatherMap の `weather[0].id`（コードグループ）を 5 区分にマッピングする。
+
+| weather id | グループ | WeatherCondition |
+|-----------|---------|------------------|
+| 2xx | 雷雨（Thunderstorm） | Storm |
+| 3xx / 5xx | 霧雨・雨（Drizzle / Rain） | Rain |
+| 6xx | 雪（Snow） | Snow |
+| 7xx | 大気現象（霧・もや等） | Cloudy |
+| 800 | 快晴（Clear） | Clear |
+| 80x | 雲量あり（Clouds） | Cloudy（801〜802 は薄い、803〜804 は厚い扱い） |
+
+`cloudCoverage` は API の `clouds.all`（0〜100%）を 0〜1 に正規化して使用する。
+
+---
+
+## 初期状態とエラーハンドリング
+
+### 初期状態
+
+- 起動時に **東京** を初期選択し、自動で予報を取得してエフェクト・UI を初期化する。
+- タイムラインの初期 `currentIndex` は 0（最初のスナップショット）。
+
+### エラーハンドリング
+
+| 状況 | 挙動 |
+|------|------|
+| ネットワーク無し / API 失敗 / タイムアウト | 画面にトースト通知でエラー表示し、**デモ用ダミーデータ**（同梱の固定スナップショット列）でエフェクト・UI を継続。アプリは破綻させない |
+| API キー未設定 | 起動時に警告トーストを出し、ダミーデータモードで動作 |
+| レスポンスのパース失敗 | 当該都市の更新を中断し、トースト表示。直前の表示状態を維持 |
+
+- ダミーデータは `StreamingAssets` または `Resources` に固定 JSON として同梱し、オフライン・無キーでもデモが成立するようにする。
+- 取得中はローディングインジケーター（スピナー等）を表示する。
+
+---
+
+## テスト方針
+
+- **ロジックは EditMode 単体テスト（Unity Test Runner）**：
+  - API レスポンスのパース（JSON → `WeatherSnapshot[]`）
+  - 天気コード（`weather.id`）→ `WeatherCondition` のマッピング
+  - 緯度経度 → 地図 XZ 座標の変換
+  - UTC → JST 変換
+  - スナップショット間の線形補間
+- **見た目・挙動は Play Mode で目視確認**：エフェクト（雲・雨・空）、マーカークリック、カメラ操作、タイムライン再生・スライダー同期。
+- 純ロジックは MonoBehaviour 非依存のクラス／静的関数に切り出し、テスト容易性を確保する。
+
+---
+
+## 実装マイルストーン
+
+検証可能な単位で段階的に進める。各マイルストーン完了時に動作確認とコミットを行う。
+
+| # | マイルストーン | 完了の目安（動作確認） |
+|---|--------------|----------------------|
+| 1 | 地図 + 自由カメラ | 日本地図 Plane が表示され、マウス/キーでカメラ操作できる |
+| 2 | 都市マスタ + マーカー配置 | `Cities.json` を読み込み、緯度経度→XZ でマーカーが正しい位置に並ぶ |
+| 3 | API 取得 + データ層 | 指定都市の予報を取得し `WeatherTimelineSO` に格納（エラー時ダミーデータ含む） |
+| 4 | 都市選択フロー | マーカークリック → 取得 → `OnSnapshotChanged` 発火までが繋がる |
+| 5 | 基本天気エフェクト | 雲・雨・晴れ + 時間帯連動の空がコンディションに応じて切り替わる |
+| 6 | タイムライン UI | DateTime 表示・再生・スライダーでスナップショットを補間再生できる |
+| — | （ここまでで MVP 完成） | |
+| 7+ | 拡張機能 | 雷 → 風矢印 → 検索パネル → Ray Tracing 切替 → 雪（優先度順） |
 
 ---
 
