@@ -19,29 +19,37 @@ namespace JapanWeatherDemo.CameraControl
         {
             var mouse = Mouse.current;
             var keyboard = Keyboard.current;
-            if (mouse == null) return;
+            // ポインターが UI（ドロップダウンのリスト等）の上にある間は、マウス由来のカメラ操作を
+            // 無視して UI 操作（ホイールでのリストスクロール等）と競合させない。
+            // キーボード（WASD/QE）操作は UI 上でも維持する。
+            bool pointerOverUI =
+                UnityEngine.EventSystems.EventSystem.current != null &&
+                UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
 
-            Vector2 mouseDelta = mouse.delta.ReadValue();
-
-            // 右ドラッグ: オービット回転（注視点を中心に）
-            if (mouse.rightButton.isPressed)
+            if (mouse != null && !pointerOverUI)
             {
-                transform.RotateAround(transform.position, Vector3.up, mouseDelta.x * orbitSpeed);
-                transform.RotateAround(transform.position, transform.right, -mouseDelta.y * orbitSpeed);
-            }
+                Vector2 mouseDelta = mouse.delta.ReadValue();
 
-            // 中ドラッグ: パン
-            if (mouse.middleButton.isPressed)
-            {
-                Vector3 pan = (-transform.right * mouseDelta.x - transform.up * mouseDelta.y) * panSpeed;
-                transform.position += pan;
-            }
+                // 右ドラッグ: オービット回転（注視点を中心に）
+                if (mouse.rightButton.isPressed)
+                {
+                    transform.RotateAround(transform.position, Vector3.up, mouseDelta.x * orbitSpeed);
+                    transform.RotateAround(transform.position, transform.right, -mouseDelta.y * orbitSpeed);
+                }
 
-            // ホイール: ズーム（前後移動）
-            float scroll = mouse.scroll.ReadValue().y;
-            if (Mathf.Abs(scroll) > 0.01f)
-            {
-                transform.position += transform.forward * Mathf.Sign(scroll) * zoomSpeed;
+                // 中ドラッグ: パン
+                if (mouse.middleButton.isPressed)
+                {
+                    Vector3 pan = (-transform.right * mouseDelta.x - transform.up * mouseDelta.y) * panSpeed;
+                    transform.position += pan;
+                }
+
+                // ホイール: ズーム（前後移動）
+                float scroll = mouse.scroll.ReadValue().y;
+                if (Mathf.Abs(scroll) > 0.01f)
+                {
+                    transform.position += transform.forward * Mathf.Sign(scroll) * zoomSpeed;
+                }
             }
 
             if (keyboard == null) return;
