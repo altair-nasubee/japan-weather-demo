@@ -26,7 +26,9 @@ namespace JapanWeatherDemo.Map
         public void SetSelected(bool selected)
         {
             Color c = selected ? selectedColor : baseColor;
-            float emission = selected ? 6f : 2f;
+            // HDRP の _EmissiveColor は nits 相当。地図は太陽光(10万Lux)で約1.6万nits相当に照らされるため、
+            // 光柱を目立たせるにはそれを上回る強度が要る。
+            float emission = selected ? 20000f : 5000f;
             // 全都市は Emissive メッシュで表現する
             if (beamRenderer != null)
                 beamRenderer.material.SetColor("_EmissiveColor", c * emission);
