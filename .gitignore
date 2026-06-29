@@ -120,3 +120,6 @@ UnityProject/Assets/StreamingAssets/config.json.meta
 
 # SDD progress ledger (local scratch)
 .superpowers/
+
+# Downloaded source assets (not redistributed; see docs/qgis-gdal-japan-map-guide.md)
+download_resources/
