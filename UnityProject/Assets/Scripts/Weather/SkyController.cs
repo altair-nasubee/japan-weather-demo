@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering.HighDefinition;
 using JapanWeatherDemo.Data;
 
 namespace JapanWeatherDemo.Weather
@@ -14,9 +15,11 @@ namespace JapanWeatherDemo.Weather
         private float targetElevation, curElevation;
         private float targetIntensity, curIntensity;
         private Color targetColor = Color.white, curColor = Color.white;
+        private HDAdditionalLightData sunHD;
 
         private void OnEnable()
         {
+            if (sun != null) sunHD = sun.GetComponent<HDAdditionalLightData>();
             if (gameManager != null) gameManager.Timeline.OnSnapshotChanged += OnSnapshot;
         }
 
@@ -49,7 +52,9 @@ namespace JapanWeatherDemo.Weather
             curColor = Color.Lerp(curColor, targetColor, followSpeed * Time.deltaTime);
 
             sun.transform.rotation = Quaternion.Euler(curElevation, sunYaw, 0f);
-            sun.intensity = curIntensity * 3.14f; // HDRP の Lux スケールに合わせ調整
+            // HDRP は HDAdditionalLightData.intensity（Lux）が実効値。Light.intensity 直接では暗くなる。
+            if (sunHD != null) sunHD.intensity = curIntensity * 100000f;
+            else sun.intensity = curIntensity * 3.14f;
             sun.color = curColor;
         }
     }
