@@ -22,28 +22,44 @@ GDAL コマンドは、QGIS と一緒に入る **「OSGeo4W Shell」** という
 
 ## 1. 元データ（Natural Earth）の準備
 
-別ガイドのとおり、Natural Earth I「Shaded Relief and Water」版をダウンロード・解凍しておく。
+Natural Earth I の「Shaded Relief and Water」版（地形の陰影と水域入りで地図らしく見えます）を使います。
 
 - 推奨ファイル: `NE1_HR_LC_SR_W.zip`（1:10m・約 308 MB、解凍後 `NE1_HR_LC_SR_W.tif` = 21600×10800 px）
 - 配布ページ: https://www.naturalearthdata.com/downloads/10m-raster-data/10m-natural-earth-1/
 - ライセンス: パブリックドメイン（出典表示・許諾不要）
 
-解凍してできた `NE1_HR_LC_SR_W.tif` の置き場所を決めておく（例：`C:\work\japan-weather-demo\_assets_src\`）。
+解凍してできた `NE1_HR_LC_SR_W.tif` の置き場所を決めておく（例：`C:\work\japan-weather-demo\download_resources\`）。
 **パスに日本語やスペースが入らない場所**だとコマンドが楽。
 
 ---
 
 ## 2. QGIS をインストールする
 
+### 方法A：winget（おすすめ・簡単）
+
+PowerShell で次の 1 行を実行するだけ（LTR = 安定版）：
+
+```powershell
+winget install OSGeo.QGIS_LTR
+```
+
+- これは**公式のスタンドアロンインストーラを自動でダウンロード・インストール**するので、
+  QGIS 本体・GDAL・OSGeo4W Shell が一式入る（手動ダウンロード版と中身は同じ）。
+- 最新版が良ければ `winget install OSGeo.QGIS`（2026 時点 4.0 系）。初めてなら LTR を推奨。
+
+### 方法B：手動インストーラ
+
 1. ダウンロードページを開く: https://qgis.org/download/
 2. Windows の **「Long Term Version (LTR)」のスタンドアロンインストーラ**をダウンロードする
    （2026 時点の LTR は 3.44。初めてなら最新版 4.x より安定した LTR を推奨）。
    - 「スタンドアロンインストーラ」= インストーラ 1 個で QGIS 本体も GDAL も入る、初心者向け。
 3. ダウンロードした `.msi`（または `.exe`）を実行し、案内に従ってそのままインストール（既定設定で OK）。
-4. インストールが終わると、スタートメニューに **「QGIS 3.44」**（バージョン名）フォルダができる。
-   その中に以下が入っている：
-   - `QGIS Desktop 3.44.x` … GUI アプリ本体
-   - **`OSGeo4W Shell`** … GDAL コマンドを打つための専用プロンプト（今回使う）
+
+### インストール後（方法A・B 共通）
+
+スタートメニューに **「QGIS 3.44」**（バージョン名）フォルダができ、その中に以下が入っている：
+- `QGIS Desktop 3.44.x` … GUI アプリ本体
+- **`OSGeo4W Shell`** … GDAL コマンドを打つための専用プロンプト（今回使う）
 
 ---
 
@@ -69,7 +85,7 @@ GDAL コマンドは、QGIS と一緒に入る **「OSGeo4W Shell」** という
 1. OSGeo4W Shell で、元 TIF を置いたフォルダへ移動する（例）：
 
    ```
-   cd C:\work\japan-weather-demo\_assets_src
+   cd C:\work\japan-weather-demo\download_resources
    ```
 
 2. 日本範囲（経度 122.0〜146.5 / 緯度 24.0〜46.5）で切り出す：
