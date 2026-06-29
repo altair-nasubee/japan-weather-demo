@@ -24,6 +24,13 @@ namespace JapanWeatherDemo.CameraControl
         private void OnDisable()
         {
             if (mapManager != null) mapManager.CityFocused -= OnCityFocused;
+            // 移動中に無効化された場合、FreeCameraController が無効のまま残らないよう復帰させる
+            if (moving != null)
+            {
+                StopCoroutine(moving);
+                moving = null;
+                if (freeCamera != null) freeCamera.enabled = true;
+            }
         }
 
         private void OnCityFocused(Vector3 worldPos)

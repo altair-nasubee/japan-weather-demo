@@ -40,6 +40,7 @@ namespace JapanWeatherDemo.UI
         // ドロップダウン操作 → 既存の選択フローを駆動
         private void OnDropdownChanged(int index)
         {
+            if (mapManager == null) return;
             if (index < 0 || index >= cityNames.Count) return;
             mapManager.SelectByName(cityNames[index]);
         }
