@@ -8,7 +8,6 @@ namespace JapanWeatherDemo.UI
     public class InfoPanelController : MonoBehaviour
     {
         [SerializeField] private GameManager gameManager;
-        [SerializeField] private TMP_Text cityLabel;
         [SerializeField] private TMP_Text conditionLabel;
         [SerializeField] private TMP_Text temperatureLabel;
 
@@ -25,7 +24,6 @@ namespace JapanWeatherDemo.UI
 
         private void OnSnapshot(WeatherSnapshot s)
         {
-            if (cityLabel != null) cityLabel.text = gameManager.Timeline.cityName;
             if (conditionLabel != null) conditionLabel.text = ToJapanese(s.condition);
             if (temperatureLabel != null) temperatureLabel.text = $"{s.temperatureCelsius:0.0}℃";
         }
