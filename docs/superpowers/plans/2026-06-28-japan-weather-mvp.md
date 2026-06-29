@@ -92,7 +92,7 @@
 
 **完了の目安:** MainScene を開いて Play すると日本地図 Plane が表示され、マウス（右ドラッグ回転・ホイールズーム・中ドラッグパン）と WASD/QE でカメラを操作できる。
 
-### Task 1.1: アセンブリ定義とテスト基盤
+### Task 1.1: アセンブリ定義とテスト基盤 ✅ 実装済み
 
 純ロジックを TDD するための土台。ランタイム/エディタ/テストの 3 アセンブリを作り、空のサンプルテストが緑になることを確認する。
 
@@ -108,6 +108,8 @@
 
 - [ ] **Step 1: ランタイム asmdef を作成**
 
+> 注: `Unity.RenderPipelines.Core.Runtime` は `UnityEngine.Rendering.Volume`（CloudController が使用）の型解決に必須。当初これが抜けて CS0246 になり追加した（commit b865aeb）。
+
 `UnityProject/Assets/Scripts/JapanWeatherDemo.asmdef`:
 
 ```json
@@ -116,6 +118,7 @@
   "rootNamespace": "JapanWeatherDemo",
   "references": [
     "Unity.InputSystem",
+    "Unity.RenderPipelines.Core.Runtime",
     "Unity.RenderPipelines.HighDefinition.Runtime",
     "Unity.VisualEffectGraph.Runtime",
     "Unity.TextMeshPro"
@@ -218,7 +221,7 @@ git add UnityProject/Assets/Scripts UnityProject/Assets/Tests
 git commit -m "chore: add runtime/editor/test assembly definitions"
 ```
 
-### Task 1.2: 地図範囲定数（MapBoundsSO）
+### Task 1.2: 地図範囲定数（MapBoundsSO）✅ 実装済み
 
 地図テクスチャのトリミング範囲とマーカー配置で共有する範囲定数を ScriptableObject に集約する。値は Natural Earth テクスチャの実図郭に合わせて後で微調整するため、初期値は spec の範囲を採用。
 
@@ -438,7 +441,7 @@ git commit -m "feat: add free camera controller using Input System"
 
 **完了の目安:** `Cities.json`（150〜200 都市）を読み込み、`GeoProjection` による lat/lon→XZ 変換で各都市の位置に光柱マーカーが正しく並ぶ。札幌が北、那覇が南西、東京が中央付近に見える。
 
-### Task 2.1: 座標変換（GeoProjection）— TDD
+### Task 2.1: 座標変換（GeoProjection）— TDD ✅ 実装済み
 
 lat/lon → 地図 XZ の純関数。`MapBoundsSO` の範囲を使い、線形（等緯度経度）変換する。テスト容易性のため `MapBoundsSO` ではなくプレーンな値を引数に取るオーバーロードも用意する。
 
@@ -813,7 +816,7 @@ git add UnityProject/Assets/Scripts/Data/CityData.cs UnityProject/Assets/Scripts
 git commit -m "feat: add city data model, catalog loader and Cities.json generator"
 ```
 
-### Task 2.3: マーカー配置（MapManager / CityMarker）
+### Task 2.3: マーカー配置（MapManager / CityMarker）⬜ 未着手（次のタスク。スクリプト CityMarker.cs / MapManager.cs は作成済み=cf80507、プレハブ・シーン配置・Play が未）
 
 `Cities.json` を読み、`GeoProjection` で各都市の XZ を求めて光柱マーカーを配置する。クリック判定用コライダーを持たせる。選択状態の見た目強調は本タスクで API を用意し、Task 4 で配線する。
 
@@ -1007,7 +1010,7 @@ git commit -m "feat: place city beam markers from catalog via GeoProjection"
 
 **完了の目安:** 指定都市の lat/lon から OpenWeatherMap の 5 日間予報を取得して `WeatherSnapshot[]`（40 点・JST）にパースし `WeatherTimelineSO` に格納できる。キー未設定・通信失敗時は同梱ダミーデータで成立する。純ロジックはすべて EditMode テストが緑。
 
-### Task 3.1: 天気区分とスナップショット構造
+### Task 3.1: 天気区分とスナップショット構造 ✅ 実装済み
 
 **Files:**
 - Create: `UnityProject/Assets/Scripts/Data/WeatherCondition.cs`
@@ -1072,7 +1075,7 @@ git add UnityProject/Assets/Scripts/Data/WeatherCondition.cs UnityProject/Assets
 git commit -m "feat: add WeatherCondition enum and WeatherSnapshot struct"
 ```
 
-### Task 3.2: 天気コード分類（ConditionMapper）— TDD
+### Task 3.2: 天気コード分類（ConditionMapper）— TDD ✅ 実装済み
 
 OpenWeatherMap の `weather[0].id` を 5 区分にマッピングする純関数。
 
@@ -1159,7 +1162,7 @@ git add UnityProject/Assets/Scripts/Weather/ConditionMapper.cs UnityProject/Asse
 git commit -m "feat: add ConditionMapper from OWM weather id with tests"
 ```
 
-### Task 3.3: UTC→JST 変換（TimeZoneUtil）— TDD
+### Task 3.3: UTC→JST 変換（TimeZoneUtil）— TDD ✅ 実装済み
 
 API の `dt`（UTC エポック秒）と `city.timezone`（オフセット秒）から JST の `DateTime` を作る純関数。日本向けデモのため固定で UTC+9 にする方針だが、`timezone` を尊重しつつ JST 表示へ正規化する。
 
@@ -1248,7 +1251,7 @@ git add UnityProject/Assets/Scripts/Weather/TimeZoneUtil.cs UnityProject/Assets/
 git commit -m "feat: add UTC to JST conversion with tests"
 ```
 
-### Task 3.4: レスポンス DTO とパース（OwmDto / WeatherParser）— TDD
+### Task 3.4: レスポンス DTO とパース（OwmDto / WeatherParser）— TDD ✅ 実装済み
 
 OWM forecast JSON を Newtonsoft で DTO にデシリアライズし、`WeatherSnapshot[]` に変換する。`cloudCoverage` は `clouds.all/100`、`rainIntensity` は `rain.3h` を 10mm/3h=1.0 でクランプ正規化。
 
@@ -1434,7 +1437,7 @@ git add UnityProject/Assets/Scripts/Weather/OwmDto.cs UnityProject/Assets/Script
 git commit -m "feat: parse OWM forecast JSON into WeatherSnapshot array with tests"
 ```
 
-### Task 3.5: タイムラインデータ（WeatherTimelineSO）— TDD
+### Task 3.5: タイムラインデータ（WeatherTimelineSO）— TDD ✅ 実装済み
 
 ランタイム ScriptableObject。`snapshots` を差し替え、`SetIndex` で `OnSnapshotChanged` を発火する。`currentIndex` は範囲クランプ。
 
@@ -1570,7 +1573,7 @@ git add UnityProject/Assets/Scripts/Data/WeatherTimelineSO.cs UnityProject/Asset
 git commit -m "feat: add WeatherTimelineSO runtime container with event and tests"
 ```
 
-### Task 3.6: ダミーデータ（DummyWeather）— TDD
+### Task 3.6: ダミーデータ（DummyWeather）— TDD ✅ 実装済み
 
 オフライン・無キーでもデモが成立する固定スナップショット列（40 点・3 時間刻み・JST）をコード生成する。多様なコンディションを含める。
 
@@ -1689,7 +1692,7 @@ git add UnityProject/Assets/Scripts/Weather/DummyWeather.cs UnityProject/Assets/
 git commit -m "feat: add offline dummy weather generator with tests"
 ```
 
-### Task 3.7: API キー解決と取得サービス（ApiKeyResolver / WeatherService）
+### Task 3.7: API キー解決と取得サービス（ApiKeyResolver / WeatherService）✅ 実装済み（ライブ取得の Play 確認は M4 で）
 
 キー解決ロジック（config.json → 環境変数 → 無し）を純ロジックで TDD し、`WeatherService` は UnityWebRequest で取得・パース・メモリキャッシュ・失敗時ダミーを担う。
 
@@ -2015,7 +2018,7 @@ git commit -m "feat: wire city selection to weather fetch and timeline"
 
 > **配線の前提:** 各コントローラーは `[SerializeField] GameManager gameManager` を持ち、`OnEnable` で `gameManager.Timeline.OnSnapshotChanged += OnSnapshot` を購読、`OnDisable` で解除する。`GameManager.Awake` が先に `Timeline` を生成するよう、`GameManager` の Script Execution Order を他コントローラーより前にする（`Edit > Project Settings > Script Execution Order` で `GameManager` を -100 に設定）。
 
-### Task 5.1: スナップショット補間（SnapshotInterpolator）— TDD
+### Task 5.1: スナップショット補間（SnapshotInterpolator）— TDD ✅ 実装済み
 
 隣接 2 スナップショット間の線形補間（数値）と最寄りコンディション選択。再生・スライダーの中間表現に使う純関数。
 
@@ -2130,7 +2133,7 @@ git add UnityProject/Assets/Scripts/Weather/SnapshotInterpolator.cs UnityProject
 git commit -m "feat: add snapshot linear interpolation with tests"
 ```
 
-### Task 5.2: 太陽角度（SunAngle）— TDD
+### Task 5.2: 太陽角度（SunAngle）— TDD ✅ 実装済み
 
 JST 時刻（小数時）→ 太陽の高度角（elevation）を返す純関数。`SkyController` が `DirectionalLight` の角度に使う。
 
@@ -2210,7 +2213,7 @@ git add UnityProject/Assets/Scripts/Weather/SunAngle.cs UnityProject/Assets/Test
 git commit -m "feat: add sun elevation model with tests"
 ```
 
-### Task 5.3: 雲（CloudController）
+### Task 5.3: 雲（CloudController）🔧 スクリプト実装済み（シーンの Volumetric Clouds 設定・Play 未）
 
 HDRP Volumetric Clouds の濃さを `cloudCoverage` に追従させる。目標値へ毎フレーム滑らかに補間。
 
@@ -2291,7 +2294,7 @@ git add UnityProject/Assets/Scripts/Weather/CloudController.cs UnityProject/Asse
 git commit -m "feat: add cloud controller driving volumetric clouds"
 ```
 
-### Task 5.4: 降水（PrecipitationController）
+### Task 5.4: 降水（PrecipitationController）🔧 スクリプト実装済み（雨/雪 VFX 作成・シーン配置・Play 未）
 
 雨・雪の VFX Graph の放出量を `rainIntensity` とコンディションに追従させる。雨用 VFX と雪用 VFX を切り替える。
 
@@ -2379,7 +2382,7 @@ git add UnityProject/Assets/Scripts/Weather/PrecipitationController.cs UnityProj
 git commit -m "feat: add precipitation controller with rain and snow VFX"
 ```
 
-### Task 5.5: 空と太陽（SkyController）
+### Task 5.5: 空と太陽（SkyController）🔧 スクリプト実装済み（PhysicallyBasedSky 設定・シーン配線・Play 未）
 
 `WeatherSnapshot.dateTime` の時刻から `SunAngle` で `DirectionalLight` の角度を決め、コンディションで空の露光/色味を変える。朝・昼・夕・夜を滑らかに遷移。
 
@@ -2482,7 +2485,7 @@ git commit -m "feat: add sky controller for time-of-day sun and condition lighti
 
 > **日本語フォントの前提（M6 のすべての UI タスク共通）:** 都市名・天気コンディションは日本語を含む。TextMeshPro 標準同梱フォントは CJK グリフを含まないため、**日本語 TMP フォントアセットを 1 つ作成**しておく（`Window > TextMeshPro > Font Asset Creator` で日本語対応フォント＝例: Noto Sans JP 等＝から生成。文字セットは常用漢字＋都市名・都道府県名を含む文字範囲）。M6 で配置する各 `TMP_Text` にこのフォントアセットを割り当てること。割り当てを忘れると日本語が「□」で表示される。
 
-### Task 6.1: 連続位置補間 API とタイムライン UI
+### Task 6.1: 連続位置補間 API とタイムライン UI 🔧 スクリプト実装済み（UI 配置・配線・Play 未）
 
 `WeatherTimelineSO` に連続位置（float）から補間スナップを発火する API を追加し、`TimelineUIController` で再生・スライダーを実装する。
 
@@ -2670,7 +2673,7 @@ git add UnityProject/Assets/Scripts/Data/WeatherTimelineSO.cs UnityProject/Asset
 git commit -m "feat: add timeline UI with playback and continuous interpolation"
 ```
 
-### Task 6.2: 情報パネル（InfoPanelController）
+### Task 6.2: 情報パネル（InfoPanelController）🔧 スクリプト実装済み（UI 配置・配線・Play 未）
 
 右上固定。選択中の都市名・気温・天気コンディションを `OnSnapshotChanged` で更新する。
 
@@ -2752,7 +2755,7 @@ git add UnityProject/Assets/Scripts/UI/InfoPanelController.cs UnityProject/Asset
 git commit -m "feat: add info panel showing city, condition and temperature"
 ```
 
-### Task 6.3: トースト通知・ローディング・初期状態
+### Task 6.3: トースト通知・ローディング・初期状態 🔧 スクリプト実装済み（UI 配置・配線・Play 未）
 
 エラー/警告のトースト、取得中ローディングインジケーター、起動時の東京初期選択を仕上げる。
 
