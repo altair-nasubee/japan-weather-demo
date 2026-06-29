@@ -145,6 +145,7 @@ winget install -e --id OSGeo.QGIS_LTR
    - sRGB (Color Texture): `ON`
    - Wrap Mode: `Clamp`
    - Max Size: `2048` 以上（Large 版でも 1470px なので 2048 で収まる）
+4. ここまで完了したら、ダウンロードした画像ファイルなどは破棄してOK（例：`C:\work\japan-weather-demo\download_resources\`に配置していたファイル）
 
 ---
 
