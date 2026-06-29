@@ -147,6 +147,12 @@ winget install -e --id OSGeo.QGIS_LTR
    - Max Size: `2048` 以上（Large 版でも 1470px なので 2048 で収まる）
 4. ここまで完了したら、ダウンロードした画像ファイルなどは破棄してOK（例：`C:\work\japan-weather-demo\download_resources\`に配置していたファイル）
 
+最後に、PowerShell で次の 1 行を実行して、QGISはアンインストールして作業完了：
+
+```powershell
+winget uninstall -e --id OSGeo.QGIS_LTR
+```
+
 ---
 
 ## 7. うまくいかないとき
