@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status:** ✅ 実装完了（2026-06-30）。Task 1〜3 すべて完了。計画後の polish/fix コミットあり（下記 As-built 追記参照）。
+
 **Goal:** 右上情報パネルの都市名表示を都市選択ドロップダウンに置き換え、選択時にカメラが対象地点の斜め見下ろし構図へスムーズに移動するようにする。
 
 **Architecture:** 既存の「ScriptableObject + C# Event 疎結合」構成を踏襲。新規 `CameraFocusController`・`CityDropdownController` は `MapManager` のイベントを購読するだけで互いを直接参照しない。カメラ姿勢算出は純粋関数 `CameraFraming.ComputeFocusPose` に切り出し EditMode でテストする。予報取得〜エフェクト更新の既存フローは変更しない。
@@ -35,7 +37,7 @@
 - Consumes: `UnityEngine.Vector3`, `UnityEngine.Quaternion`
 - Produces: `JapanWeatherDemo.CameraControl.CameraFraming.ComputeFocusPose(Vector3 target, float height, float backDistance)` → `(Vector3 position, Quaternion rotation)`
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 Create `UnityProject/Assets/Tests/EditMode/CameraFramingTests.cs`:
 
@@ -85,12 +87,12 @@ namespace JapanWeatherDemo.Tests
 }
 ```
 
-- [ ] **Step 2: テストが失敗することを確認**
+- [x] **Step 2: テストが失敗することを確認**
 
 Unity を refresh し、Unity Test Runner で EditMode を実行（MCP: `run_tests` mode=`EditMode`、filter `CameraFramingTests`）。
 Expected: コンパイルエラー（`CameraFraming` が存在しない）でテストがビルド不可 = FAIL。
 
-- [ ] **Step 3: 最小実装を書く**
+- [x] **Step 3: 最小実装を書く**
 
 Create `UnityProject/Assets/Scripts/Camera/CameraFraming.cs`:
 
@@ -117,12 +119,12 @@ namespace JapanWeatherDemo.CameraControl
 }
 ```
 
-- [ ] **Step 4: テストが通ることを確認**
+- [x] **Step 4: テストが通ることを確認**
 
 Unity を refresh し `read_console` でコンパイルエラーが無いことを確認。EditMode テストを実行（filter `CameraFramingTests`）。
 Expected: 3 件すべて PASS。既存テストも緑のまま（全体実行で 45+3=48 緑）。
 
-- [ ] **Step 5: コミット**
+- [x] **Step 5: コミット**
 
 ```bash
 cd "C:\work\japan-weather-demo"
@@ -145,7 +147,7 @@ git commit -m "feat: add CameraFraming focus-pose pure function with tests"
 - Consumes: `JapanWeatherDemo.CameraControl.CameraFraming.ComputeFocusPose(Vector3, float, float)`、`JapanWeatherDemo.CameraControl.FreeCameraController`
 - Produces: `JapanWeatherDemo.Map.MapManager.CityFocused`（`event System.Action<Vector3>`、選択マーカーの `transform.position` を渡す）
 
-- [ ] **Step 1: MapManager に CityFocused イベントを追加**
+- [x] **Step 1: MapManager に CityFocused イベントを追加**
 
 Modify `UnityProject/Assets/Scripts/Map/MapManager.cs`。既存の `public event System.Action<CityData> CitySelected;` の直後に追加:
 
@@ -160,7 +162,7 @@ Modify `UnityProject/Assets/Scripts/Map/MapManager.cs`。既存の `public event
             CityFocused?.Invoke(marker.transform.position);
 ```
 
-- [ ] **Step 2: CameraFocusController を作成**
+- [x] **Step 2: CameraFocusController を作成**
 
 Create `UnityProject/Assets/Scripts/Camera/CameraFocusController.cs`:
 
@@ -225,12 +227,12 @@ namespace JapanWeatherDemo.CameraControl
 }
 ```
 
-- [ ] **Step 3: コンパイル確認**
+- [x] **Step 3: コンパイル確認**
 
 Unity を refresh し `read_console` でエラーが無いことを確認。
 Expected: コンパイルエラー無し。EditMode テストも全緑のまま（filter なしで全実行）。
 
-- [ ] **Step 4: シーン配線（Play 停止中）**
+- [x] **Step 4: シーン配線（Play 停止中）**
 
 MainScene を Edit モードで開く。
 1. `MainCamera` を選択し、`CameraFocusController` を Add Component。
@@ -239,7 +241,7 @@ MainScene を Edit モードで開く。
 4. パラメータは既定値（height 14 / backDistance 10 / duration 0.7）のまま。
 5. シーンを保存。
 
-- [ ] **Step 5: Play-mode 目視確認**
+- [x] **Step 5: Play-mode 目視確認**
 
 Play を開始。
 - 起動時、初期選択（東京）へカメラがスムーズに寄ること。
@@ -247,7 +249,7 @@ Play を開始。
 - 移動完了後、右ドラッグ/ホイール/WASD で自由カメラ操作ができること（`FreeCameraController` が再有効化されている）。
 Play を停止。
 
-- [ ] **Step 6: コミット**
+- [x] **Step 6: コミット**
 
 ```bash
 cd "C:\work\japan-weather-demo"
@@ -271,7 +273,7 @@ git commit -m "feat: smooth camera focus on city selection"
 - Consumes: `JapanWeatherDemo.Map.MapManager.CitySelected`（`event Action<CityData>`）、`JapanWeatherDemo.Map.MapManager.SelectByName(string)`、`JapanWeatherDemo.Data.CityCatalog.LoadFromStreamingAssets()`、`TMPro.TMP_Dropdown`
 - Produces: `JapanWeatherDemo.UI.CityDropdownController`（シーン配線用 MonoBehaviour）
 
-- [ ] **Step 1: CityDropdownController を作成**
+- [x] **Step 1: CityDropdownController を作成**
 
 Create `UnityProject/Assets/Scripts/UI/CityDropdownController.cs`:
 
@@ -334,7 +336,7 @@ namespace JapanWeatherDemo.UI
 }
 ```
 
-- [ ] **Step 2: InfoPanelController から都市名表示を削除**
+- [x] **Step 2: InfoPanelController から都市名表示を削除**
 
 Modify `UnityProject/Assets/Scripts/UI/InfoPanelController.cs`。`cityLabel` フィールドとその代入を削除し、天気・気温表示のみ残す。
 
@@ -348,12 +350,12 @@ Modify `UnityProject/Assets/Scripts/UI/InfoPanelController.cs`。`cityLabel` フ
         }
 ```
 
-- [ ] **Step 3: コンパイル確認**
+- [x] **Step 3: コンパイル確認**
 
 Unity を refresh し `read_console` でエラーが無いことを確認。
 Expected: コンパイルエラー無し。EditMode テストも全緑のまま。
 
-- [ ] **Step 4: シーン配線（Play 停止中）**
+- [x] **Step 4: シーン配線（Play 停止中）**
 
 MainScene を Edit モードで開く。
 1. InfoPanel 内の都市名 `TMP_Text` GameObject を削除し、同じ位置に `TMP_Dropdown`（UI > Dropdown - TextMeshPro）を配置（または既存都市名箇所に差し替え）。
@@ -362,7 +364,7 @@ MainScene を Edit モードで開く。
 4. 旧 `InfoPanelController` の `cityLabel` 参照が外れていることを確認（フィールド削除済みのため Inspector から消える）。
 5. シーンを保存。
 
-- [ ] **Step 5: Play-mode 目視確認**
+- [x] **Step 5: Play-mode 目視確認**
 
 Play を開始。
 - 起動時、ドロップダウンの現在値が初期選択（東京）に一致していること。
@@ -372,7 +374,7 @@ Play を開始。
 - ドロップダウン操作後に `onValueChanged` の再帰発火やエラーが出ないこと（`read_console` 確認）。
 Play を停止。
 
-- [ ] **Step 6: コミット**
+- [x] **Step 6: コミット**
 
 ```bash
 cd "C:\work\japan-weather-demo"
@@ -385,7 +387,30 @@ git commit -m "feat: city selection dropdown synced with map markers"
 
 ## 完了基準
 
-- EditMode テスト全緑（既存 45 + `CameraFramingTests` 3 = 48）。
-- ドロップダウンとマーカーが双方向連動し、選択時にカメラが斜め見下ろし構図へスムーズ移動する（Play-mode 目視）。
-- 既存の予報取得〜エフェクト/タイムライン更新フローに退行が無い。
-- `progress.md` に本機能の進捗を追記。
+- [x] EditMode テスト全緑（既存 45 + `CameraFramingTests` 3 = 48）。
+- [x] ドロップダウンとマーカーが双方向連動し、選択時にカメラが斜め見下ろし構図へスムーズ移動する（Play-mode 目視）。
+- [x] 既存の予報取得〜エフェクト/タイムライン更新フローに退行が無い。
+- [x] `.superpowers/sdd/progress.md` に本機能の進捗を追記。
+
+---
+
+## As-built 追記（計画後の変更）
+
+計画どおりの 3 コミットに加え、Play 確認・レビューで以下を追加済み。
+
+| コミット | 内容 |
+|---------|------|
+| `6deacf5` | Task 1: `CameraFraming` + EditMode テスト |
+| `c413aac` | Task 2: `CityFocused` イベント + `CameraFocusController` + シーン配線 |
+| `7543f65` | Task 3: `CityDropdownController` + `InfoPanelController` から都市名表示削除 + シーン配線 |
+| `cd0ba69` | `CameraFocusController.OnDisable` で移動中コルーチン停止・`FreeCameraController` 復帰。`CityDropdownController.OnDropdownChanged` に `mapManager` null ガード |
+| `9ebd9b2` | カメラフォーカスを低め・近めに調整（シーン Inspector 値）。情報パネル縦レイアウト調整 |
+| `bbfbbef` | ドロップダウンを他 UI と揃えたダークテーマ（黒背景・白文字） |
+| `46e4211` | `FreeCameraController` が UI 上のポインター中はマウス操作を無視 |
+
+**実装との差分（計画テキストとの相違点）**
+
+- `CameraFocusController` に `OnDisable` 時のコルーチン中断・`FreeCameraController` 再有効化を追加（`cd0ba69`）。
+- `CityDropdownController.OnDropdownChanged` に `if (mapManager == null) return;` を追加（`cd0ba69`）。
+- `InfoPanelController` の XML コメントは「都市名・天気・気温」のままだが、実装は天気・気温のみ（都市名は `CityDropdownController` 側）。
+- シーン上の GameObject 名: ドロップダウンは `CityDropdown`（`TMP_Dropdown` + `CityDropdownController`）。
