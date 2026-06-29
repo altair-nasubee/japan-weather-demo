@@ -53,9 +53,13 @@ namespace JapanWeatherDemo.CameraControl
             if (keyboard.dKey.isPressed) move += transform.right;
             if (keyboard.aKey.isPressed) move -= transform.right;
             move.y = 0f;
-            if (keyboard.eKey.isPressed) move += Vector3.up;
-            if (keyboard.qKey.isPressed) move -= Vector3.up;
             transform.position += move * keyPanSpeed * Time.deltaTime;
+
+            // Q/E: 高度（altitudeSpeed で上下）
+            Vector3 alt = Vector3.zero;
+            if (keyboard.eKey.isPressed) alt += Vector3.up;
+            if (keyboard.qKey.isPressed) alt -= Vector3.up;
+            transform.position += alt * altitudeSpeed * Time.deltaTime;
         }
     }
 }

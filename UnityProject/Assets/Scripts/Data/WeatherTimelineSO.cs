@@ -1,6 +1,5 @@
 using JapanWeatherDemo.Weather;
 using System;
-using System;
 using UnityEngine;
 
 namespace JapanWeatherDemo.Data
@@ -34,7 +33,7 @@ namespace JapanWeatherDemo.Data
             OnSnapshotChanged?.Invoke(snapshots[currentIndex]);
         }
 
-        /// <summary>連续位置(0〜 Count-1)から補間したスナップショットを発火する。</summary>
+        /// <summary>連続位置(0〜 Count-1)から補間したスナップショットを発火する。</summary>
         public void SetContinuousIndex(float pos)
         {
             if (Count == 0) return;

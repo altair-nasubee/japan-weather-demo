@@ -15,14 +15,12 @@ namespace JapanWeatherDemo
         [SerializeField] private string initialCityName = "東京";
         [SerializeField] private TimelineUIController timelineUI;
 
-        public WeatherTimelineSO Timeline { get; private set; }
+        private WeatherTimelineSO _timeline;
+        /// <summary>ランタイムのタイムライン。初回アクセス時に遅延生成し、購読の実行順序に依存しない。</summary>
+        public WeatherTimelineSO Timeline =>
+            _timeline != null ? _timeline : (_timeline = ScriptableObject.CreateInstance<WeatherTimelineSO>());
         public event Action<string> StatusMessage;
         public event Action<bool> LoadingChanged;
-
-        private void Awake()
-        {
-            Timeline = ScriptableObject.CreateInstance<WeatherTimelineSO>();
-        }
 
         private void OnEnable()
         {
@@ -36,6 +34,11 @@ namespace JapanWeatherDemo
 
         private void Start()
         {
+            if (mapManager == null)
+            {
+                Debug.LogError("[GameManager] mapManager が未設定です。Inspector で割り当ててください。", this);
+                return;
+            }
             // 初期都市（東京）を選択。マーカー側にも選択ハイライトを反映させる。
             mapManager.SelectByName(initialCityName);
         }
