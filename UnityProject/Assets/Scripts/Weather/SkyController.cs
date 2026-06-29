@@ -36,8 +36,8 @@ namespace JapanWeatherDemo.Weather
 
             // コンディションで光量と色温度の目標を決める
             float cloudDim = Mathf.Lerp(1f, 0.35f, s.cloudCoverage);
-            // 夜でも地図が視認できる最低照度を確保（真っ黒回避）
-            targetIntensity = targetElevation > 0 ? cloudDim : 0.18f;
+            // 夜でも地図がはっきり視認できる最低照度を確保（真っ黒回避）
+            targetIntensity = targetElevation > 0 ? Mathf.Max(cloudDim, 0.45f) : 0.45f;
 
             // 朝夕はオレンジ寄り、昼は白、夜は青み
             if (targetElevation <= 0f) targetColor = new Color(0.4f, 0.5f, 0.8f);      // 夜
