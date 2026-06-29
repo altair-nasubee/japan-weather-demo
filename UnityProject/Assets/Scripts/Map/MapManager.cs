@@ -19,6 +19,9 @@ namespace JapanWeatherDemo.Map
 
         public IReadOnlyList<CityMarker> Markers => markers;
         public event System.Action<CityData> CitySelected;
+        /// <summary>選択マーカーのワールド位置を通知する（カメラフォーカス用）。</summary>
+        public event System.Action<Vector3> CityFocused;
+
 
         private void Awake()
         {
@@ -72,6 +75,8 @@ namespace JapanWeatherDemo.Map
             selected = marker;
             selected.SetSelected(true);
             CitySelected?.Invoke(marker.City);
+            CityFocused?.Invoke(marker.transform.position);
+
         }
     }
 }
