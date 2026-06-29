@@ -11,7 +11,7 @@ Unity (HDRP) で作る Windows 向け天気可視化デモアプリ。
 ## 目的と見せ場
 
 - **目的**：ポートフォリオ・技術デモ
-- **見せ場①**：OpenWeatherMap の予報データを取得し、HDRP の Volumetric Clouds・VFX Graph・PhysicallyBasedSky をリアルタイムに制御する気象エフェクト
+- **見せ場①**：OpenWeatherMap の予報データを取得し、HDRP の PhysicallyBasedSky・Bloom・雲レイヤー・降水パーティクル をリアルタイムに制御する気象エフェクト
 - **見せ場②**：日本地図上に都市マーカーを配置し、クリックで都市を選択するインタラクティブな地図 UI
 - **見せ場③**：5 日間・3 時間刻みのタイムラインで天気の変化をアニメーション再生する時間軸 UI
 
@@ -75,7 +75,7 @@ OpenWeatherMap API
     ↓ (WeatherService.FetchForecast)
 WeatherTimelineSO (ScriptableObject)
     ↓ (event OnSnapshotChanged)
-    ├→ CloudController        — Volumetric Clouds の濃さ・形状
+    ├→ CloudController        — 雲レイヤー（半透明メッシュ）の濃さ・色
     ├→ PrecipitationController — 雨・雪パーティクルの密度
     ├→ SkyController          — PhysicallyBasedSky・DirectionalLight の角度
     ├→ TimelineUIController   — DateTime 表示・スライダー同期
@@ -97,8 +97,8 @@ UnityProject/Assets/
 │   │   └── CityData.cs             — 都市名・座標・都道府県
 │   ├── Weather/
 │   │   ├── WeatherService.cs       — API 取得・パース
-│   │   ├── CloudController.cs      — Volumetric Clouds 制御
-│   │   ├── PrecipitationController.cs — 雨・雪 VFX Graph 制御
+│   │   ├── CloudController.cs      — 雲レイヤー（半透明メッシュ）制御
+│   │   ├── PrecipitationController.cs — 雨・雪 ParticleSystem 制御
 │   │   └── SkyController.cs        — 空・太陽光の時間帯制御
 │   ├── Map/
 │   │   ├── MapManager.cs           — 地図・マーカー管理
@@ -125,9 +125,9 @@ MainScene
 ├── [Map]    CityMarkers (Parent)     — 都市マーカー群
 ├── [Camera] MainCamera              — 自由カメラ
 ├── [Effects] WeatherEffectsRoot
-│   ├── VolumetricCloudsVolume       — HDRP Volumetric Clouds
-│   ├── RainVFX                      — VFX Graph（雨）
-│   └── SnowVFX                      — VFX Graph（雪）
+│   ├── CloudLayer       — 半透明メッシュ雲レイヤー（地図上空 Plane）
+│   ├── RainPS                      — ParticleSystem（雨）
+│   └── SnowPS                      — ParticleSystem（雪）
 ├── [Lighting] Sun (DirectionalLight) — 時間帯連動
 ├── [UI]     Canvas
 │   └── TimelinePanel                — 下部固定 UI
@@ -142,7 +142,7 @@ MainScene
 
 **線形（等緯度経度）マッピング。** 日本のバウンディングボックスを地図 Plane の XZ 平面に線形変換する。フラットな地図テクスチャと相性が良く、デモ用途には十分。
 
-- 緯度経度の範囲：`lat 24〜46` / `lon 123〜146`（沖縄〜北海道を含む）。地図テクスチャの図郭に合わせて微調整する。
+- 緯度経度の範囲：`lat 24〜46.5` / `lon 122〜146.5`（沖縄〜北海道を含む）。地図テクスチャの図郭に合わせて微調整する。
 - 等緯度経度（Plate Carrée）のため日本は実際よりやや縦長に見える（デモ用途では許容）。地図 Plane のアスペクト比は **経度幅:緯度幅** をテクスチャ図郭に一致させ、Plane の実寸と範囲定数（`MapBounds`）を必ず揃える。
 
 ```
@@ -237,7 +237,7 @@ public struct WeatherSnapshot
 
 ### コンディション別演出
 
-| WeatherCondition | Volumetric Clouds | 雨パーティクル | 雷 | 空の色 |
+| WeatherCondition | 雲レイヤー | 降水パーティクル | 雷 | 空の色 |
 |-----------------|-------------------|--------------|-----|--------|
 | Clear   | なし〜薄い | なし | なし | 青・オレンジ（時間帯連動） |
 | Cloudy  | 厚い       | なし | なし | グレー |
@@ -285,7 +285,7 @@ public struct WeatherSnapshot
 
 ### UI の依存
 
-- UI は TextMeshPro（uGUI）を使用する。都市名・天気コンディションなど**日本語を表示するため、CJK グリフを含む日本語 TMP フォントアセットを用意する**（TextMeshPro 標準同梱フォントは日本語グリフを含まない）。実装初期にフォントアセットを生成しておく。
+- UI は TextMeshPro（uGUI）を使用する。都市名・天気コンディションなど**日本語を表示するため、CJK グリフを含む日本語 TMP フォントアセット（実装では Noto Sans JP / SIL OFL、Dynamic 生成）を用意する**（TextMeshPro 標準同梱フォントは日本語グリフを含まない）。実装初期にフォントアセットを生成しておく。
 
 ---
 

@@ -816,7 +816,7 @@ git add UnityProject/Assets/Scripts/Data/CityData.cs UnityProject/Assets/Scripts
 git commit -m "feat: add city data model, catalog loader and Cities.json generator"
 ```
 
-### Task 2.3: マーカー配置（MapManager / CityMarker）⬜ 未着手（次のタスク。スクリプト CityMarker.cs / MapManager.cs は作成済み=cf80507、プレハブ・シーン配置・Play が未）
+### Task 2.3: マーカー配置（MapManager / CityMarker）✅ 実装済み（プレハブ＋シーン配置＋Play 確認済み commit b480555、MCP 構築、emissive 5000/20000 nits）
 
 `Cities.json` を読み、`GeoProjection` で各都市の XZ を求めて光柱マーカーを配置する。クリック判定用コライダーを持たせる。選択状態の見た目強調は本タスクで API を用意し、Task 4 で配線する。
 
@@ -840,7 +840,7 @@ git commit -m "feat: add city data model, catalog loader and Cities.json generat
     - `void SelectByName(string cityName)`
   - Task 4.1 が `MapManager.CitySelected` を購読し、`SelectByName` で初期都市（東京）を選ぶ。
 
-- [ ] **Step 1: CityMarker を実装**
+- [x] **Step 1: CityMarker を実装**
 
 `UnityProject/Assets/Scripts/Map/CityMarker.cs`:
 
@@ -892,7 +892,7 @@ namespace JapanWeatherDemo.Map
 }
 ```
 
-- [ ] **Step 2: MapManager を実装**
+- [x] **Step 2: MapManager を実装**
 
 `UnityProject/Assets/Scripts/Map/MapManager.cs`:
 
@@ -976,28 +976,28 @@ namespace JapanWeatherDemo.Map
 }
 ```
 
-- [ ] **Step 3: コンパイルを確認**
+- [x] **Step 3: コンパイルを確認**
 
 Expected: コンソールにエラー無し。
 
-- [ ] **Step 4: 光柱マーカーのプレハブを作る**
+- [x] **Step 4: 光柱マーカーのプレハブを作る**
 
 - 空 GameObject `CityMarker` を作成し `CityMarker.cs` をアタッチ。
 - 子に細い `Cylinder`（Scale 例 `(0.05, 1.5, 0.05)`、`Position.y` を半分上げる）を置き、HDRP/Lit のエミッシブマテリアルを割当て → `beamRenderer` に設定。`Collider` はクリック判定用に Cylinder の Capsule/Box でよい（`CityMarker` の `RequireComponent(Collider)` を満たすようルート or 子に付与し、`GetComponentInParent` で拾えるようにする）。
 - 子に `Light`（Spot/Point、上向き）を追加 → `beamLight` に設定し、**初期状態は `enabled = false`**（選択時のみ有効化される）。
 - `Assets/Prefabs/CityMarker.prefab` として保存。
 
-- [ ] **Step 5: シーンに MapManager を配置**
+- [x] **Step 5: シーンに MapManager を配置**
 
 - 空 GameObject `MapManager` を作成し `MapManager.cs` をアタッチ。
 - `bounds` に `MapBounds.asset`、`markerPrefab` に `CityMarker.prefab`、`raycastCamera` に `MainCamera` を設定。
 - 子に空 GameObject `CityMarkers` を作り `markerParent` に設定（シーン階層 `[Map]/CityMarkers`）。
 
-- [ ] **Step 6: Play して配置を目視確認**
+- [x] **Step 6: Play して配置を目視確認**
 
 Play し、150〜200 本の光柱が日本地図上の正しい位置に並ぶこと。札幌が北、那覇が南西、東京が中央付近。Expected: マーカーが海上にずれていない（ずれる場合は `MapBounds` の範囲とテクスチャ図郭・Plane 実寸の不一致を疑う）。
 
-- [ ] **Step 7: コミット**
+- [x] **Step 7: コミット**
 
 ```bash
 git add UnityProject/Assets/Scripts/Map UnityProject/Assets/Prefabs/CityMarker.prefab UnityProject/Assets/Scenes/MainScene.unity
@@ -1912,7 +1912,7 @@ git commit -m "feat: add API key resolver and weather fetch service with dummy f
 
 **完了の目安:** 起動時に東京が自動選択され予報が取得・格納される。地図上のマーカーをクリックすると、その都市の予報取得 → `WeatherTimelineSO.SetData` → `OnSnapshotChanged` 発火までが繋がる（購読側はまだ無くてもログで確認できる）。
 
-### Task 4.1: GameManager による配線
+### Task 4.1: GameManager による配線 ✅ 実装済み（commit 8373589、東京自動選択→取得→Timeline city=東京 count=40）
 
 `MapManager.CitySelected` を購読し、`WeatherService.FetchForecast` を呼び、結果を `WeatherTimelineSO.SetData` に流す。起動時に東京を初期選択する。`WeatherTimelineSO` は `CreateInstance` で 1 個だけ生成して再利用。
 
@@ -1992,13 +1992,13 @@ namespace JapanWeatherDemo
 
 Expected: コンソールにエラー無し。
 
-- [ ] **Step 3: シーンに GameManager を配置**
+- [x] **Step 3: シーンに GameManager を配置**
 
 - 空 GameObject `GameManager` を作成し `GameManager.cs` をアタッチ。
 - `mapManager` に `MapManager`、`weatherService` に `WeatherService`（同じく空 GameObject にアタッチ）を割当て。
 - `MapManager` の `markerPrefab`/`bounds`/`raycastCamera` 等が設定済みであることを再確認。
 
-- [ ] **Step 4: Play してフローを目視確認**
+- [x] **Step 4: Play してフローを目視確認**
 
 Play し、コンソールに `[GameManager] 東京: 40 snapshots loaded`（無キーなら直前に警告ログ＋ダミー 40 点）が出ること。地図上で別の都市マーカーをクリックすると、その都市名で同様のログが出て、選択マーカーの光柱がハイライトされること。
 Expected: クリックごとに対応都市のスナップショット数ログが出る。キー設定済みなら実データ、未設定ならダミー。
@@ -2213,7 +2213,7 @@ git add UnityProject/Assets/Scripts/Weather/SunAngle.cs UnityProject/Assets/Test
 git commit -m "feat: add sun elevation model with tests"
 ```
 
-### Task 5.3: 雲（CloudController）🔧 スクリプト実装済み（シーンの Volumetric Clouds 設定・Play 未）
+### Task 5.3: 雲（CloudController）✅ 実装済み ※方式変更: Volumetric Clouds→半透明メッシュ雲レイヤー（commit f8b3815、実コード/CloudLayer.mat 優先。下の Step は旧 VC 版で不採用）
 
 HDRP Volumetric Clouds の濃さを `cloudCoverage` に追従させる。目標値へ毎フレーム滑らかに補間。
 
@@ -2278,12 +2278,12 @@ namespace JapanWeatherDemo.Weather
 
 Expected: コンソールにエラー無し。
 
-- [ ] **Step 3: シーンに Volumetric Clouds を追加**
+- [x] **Step 3: シーンに Volumetric Clouds を追加**
 
 - `MainScene` の Global Volume プロファイルに `Add Override > Sky > Volumetric Clouds` を追加し、`Enable` と `Density Multiplier` を上書き有効化。Local Clouds が必要なら有効化。
 - 空 GameObject `WeatherEffectsRoot` を作り、子に `CloudController` をアタッチ（または既存 GameObject に付与）。`gameManager` と `volume`（Global Volume）を割当て。
 
-- [ ] **Step 4: Play して目視確認**
+- [x] **Step 4: Play して目視確認**
 
 Play し、ダミー/実データのコンディション変化（Clear↔Cloudy↔Storm）に応じて雲量が滑らかに増減すること。Expected: Clear で薄く/消え、Storm で非常に厚くなる。
 
@@ -2294,7 +2294,7 @@ git add UnityProject/Assets/Scripts/Weather/CloudController.cs UnityProject/Asse
 git commit -m "feat: add cloud controller driving volumetric clouds"
 ```
 
-### Task 5.4: 降水（PrecipitationController）🔧 スクリプト実装済み（雨/雪 VFX 作成・シーン配置・Play 未）
+### Task 5.4: 降水（PrecipitationController）✅ 実装済み ※方式変更: VFX Graph→ParticleSystem（commit ca4a73b、実コード/Rain・SnowParticle.mat 優先。下の Step は旧 VFX 版で不採用）
 
 雨・雪の VFX Graph の放出量を `rainIntensity` とコンディションに追従させる。雨用 VFX と雪用 VFX を切り替える。
 
@@ -2365,13 +2365,13 @@ namespace JapanWeatherDemo.Weather
 
 Expected: コンソールにエラー無し。
 
-- [ ] **Step 3: 雨/雪 VFX を作成**
+- [x] **Step 3: 雨/雪 VFX を作成**
 
 - `Assets/VFX/RainVFX.vfx` を作成（`Create > Visual Effects > Visual Effect Graph`）。Spawn に `Constant Spawn Rate` を置き、Rate を Exposed な `float SpawnRate`（Blackboard で公開）にバインド。落下方向は -Y、雨らしい細長いパーティクル。カメラに追従する広い放出ボックス。
 - `Assets/VFX/SnowVFX.vfx` を同様に作成（白く、ゆっくり、ふわふわ）。
 - シーンに `RainVFX`/`SnowVFX` GameObject を配置し、`PrecipitationController`（`WeatherEffectsRoot` 配下）の `rainVfx`/`snowVfx` と `gameManager` を割当て。
 
-- [ ] **Step 4: Play して目視確認**
+- [x] **Step 4: Play して目視確認**
 
 Play し、Rain/Storm で雨が降り（Storm でより強く）、Snow で雪に切り替わり、Clear/Cloudy で止むこと。Expected: コンディション遷移に応じて放出量が滑らかに増減・切替。
 
@@ -2382,7 +2382,7 @@ git add UnityProject/Assets/Scripts/Weather/PrecipitationController.cs UnityProj
 git commit -m "feat: add precipitation controller with rain and snow VFX"
 ```
 
-### Task 5.5: 空と太陽（SkyController）🔧 スクリプト実装済み（PhysicallyBasedSky 設定・シーン配線・Play 未）
+### Task 5.5: 空と太陽（SkyController）✅ 実装済み（commit 1f920dc、GlobalVolume に PBS+Exposure Fixed EV15+Bloom、HDAdditionalLightData の Lux で太陽制御）
 
 `WeatherSnapshot.dateTime` の時刻から `SunAngle` で `DirectionalLight` の角度を決め、コンディションで空の露光/色味を変える。朝・昼・夕・夜を滑らかに遷移。
 
@@ -2461,12 +2461,12 @@ namespace JapanWeatherDemo.Weather
 
 Expected: コンソールにエラー無し。
 
-- [ ] **Step 3: シーンに PhysicallyBasedSky を追加**
+- [x] **Step 3: シーンに PhysicallyBasedSky を追加**
 
 - Global Volume に `Add Override > Sky > Physically Based Sky`（または HDRP テンプレ既定の空）を追加。Visual Environment の Sky type を一致させる。
 - `SkyController` を `WeatherEffectsRoot` 配下に追加し、`gameManager` と `sun`（シーンの `Sun` DirectionalLight）を割当て。
 
-- [ ] **Step 4: Play して目視確認**
+- [x] **Step 4: Play して目視確認**
 
 Play し、タイムライン上で時刻が朝→昼→夕→夜と進む（または異なる時刻のスナップに切替）と、太陽の角度・明るさ・色が滑らかに変化すること。曇り/雨で全体が暗くなること。Expected: 夜は暗く青み、朝夕はオレンジ、昼は明るい白。
 
@@ -2485,7 +2485,7 @@ git commit -m "feat: add sky controller for time-of-day sun and condition lighti
 
 > **日本語フォントの前提（M6 のすべての UI タスク共通）:** 都市名・天気コンディションは日本語を含む。TextMeshPro 標準同梱フォントは CJK グリフを含まないため、**日本語 TMP フォントアセットを 1 つ作成**しておく（`Window > TextMeshPro > Font Asset Creator` で日本語対応フォント＝例: Noto Sans JP 等＝から生成。文字セットは常用漢字＋都市名・都道府県名を含む文字範囲）。M6 で配置する各 `TMP_Text` にこのフォントアセットを割り当てること。割り当てを忘れると日本語が「□」で表示される。
 
-### Task 6.1: 連続位置補間 API とタイムライン UI 🔧 スクリプト実装済み（UI 配置・配線・Play 未）
+### Task 6.1: 連続位置補間 API とタイムライン UI ✅ 実装済み（commit 241c3b0、下部 TimelinePanel、日本語 TMP、MCP 構築）
 
 `WeatherTimelineSO` に連続位置（float）から補間スナップを発火する API を追加し、`TimelineUIController` で再生・スライダーを実装する。
 
@@ -2656,13 +2656,13 @@ namespace JapanWeatherDemo.UI
         if (timelineUI != null) timelineUI.ConfigureForCurrentData();
 ```
 
-- [ ] **Step 6: シーンに TimelinePanel を構築**
+- [x] **Step 6: シーンに TimelinePanel を構築**
 
 - `Canvas`（Screen Space - Overlay）を作り、子に `TimelinePanel`（下部固定: アンカー下、横いっぱい）。
 - `TimelinePanel` 内に `Slider`、`Button`（子 TMP_Text `playButtonLabel`）、`TMP_Text dateTimeLabel`（"2024/06/28 09:00"）を配置。
 - 空 GameObject or Canvas に `TimelineUIController` をアタッチし、各参照（`gameManager`/`slider`/`playButton`/`dateTimeLabel`/`playButtonLabel`）を割当て。`GameManager.timelineUI` にこの参照を割当て。
 
-- [ ] **Step 7: Play して目視確認**
+- [x] **Step 7: Play して目視確認**
 
 Play し、再生ボタンで時刻が進みエフェクトが滑らかに変化、スライダーで任意時刻にジャンプでき、DateTime ラベルが JST で更新されること。都市を切り替えるとスライダー範囲が再設定され先頭に戻ること。Expected: 再生・スライダー・ラベルが連動。
 
@@ -2673,7 +2673,7 @@ git add UnityProject/Assets/Scripts/Data/WeatherTimelineSO.cs UnityProject/Asset
 git commit -m "feat: add timeline UI with playback and continuous interpolation"
 ```
 
-### Task 6.2: 情報パネル（InfoPanelController）🔧 スクリプト実装済み（UI 配置・配線・Play 未）
+### Task 6.2: 情報パネル（InfoPanelController）✅ 実装済み（commit 2d06f0a、右上、Noto Sans JP/OFL、TMP Essentials 導入）
 
 右上固定。選択中の都市名・気温・天気コンディションを `OnSnapshotChanged` で更新する。
 
@@ -2739,12 +2739,12 @@ namespace JapanWeatherDemo.UI
 
 Expected: コンソールにエラー無し。
 
-- [ ] **Step 3: シーンに InfoPanel を構築**
+- [x] **Step 3: シーンに InfoPanel を構築**
 
 - `Canvas` の子に `InfoPanel`（右上アンカー）を作り、`cityLabel`/`conditionLabel`/`temperatureLabel`（TMP_Text）を縦に配置。
 - `InfoPanelController` をアタッチし `gameManager` と 3 ラベルを割当て。
 
-- [ ] **Step 4: Play して目視確認**
+- [x] **Step 4: Play して目視確認**
 
 Play し、起動時に「東京 / 晴れ ☀ / 28.5℃」のように表示され、別都市クリックや再生で内容が更新されること。Expected: 都市名・天気・気温が選択とタイムラインに追従。
 
@@ -2755,7 +2755,7 @@ git add UnityProject/Assets/Scripts/UI/InfoPanelController.cs UnityProject/Asset
 git commit -m "feat: add info panel showing city, condition and temperature"
 ```
 
-### Task 6.3: トースト通知・ローディング・初期状態 🔧 スクリプト実装済み（UI 配置・配線・Play 未）
+### Task 6.3: トースト通知・ローディング・初期状態 ✅ 実装済み（commit bc4323f、Toast+Spinner、EventSystem=InputSystemUIInputModule、ライブ取得も確認）
 
 エラー/警告のトースト、取得中ローディングインジケーター、起動時の東京初期選択を仕上げる。
 
@@ -2892,12 +2892,12 @@ namespace JapanWeatherDemo.UI
 }
 ```
 
-- [ ] **Step 4: シーンに Toast / Spinner を構築し配線**
+- [x] **Step 4: シーンに Toast / Spinner を構築し配線**
 
 - `Canvas` の子に `Toast`（上部中央、`CanvasGroup` + 背景 + TMP_Text）を作り、`ToastController` をアタッチして `gameManager`/`group`/`label` を割当て。
 - `Canvas` の子に `Spinner`（中央、回転 Image）を作り、`LoadingIndicator` をアタッチして `gameManager`/`spinner` を割当て。
 
-- [ ] **Step 5: Play して全体を目視確認（受け入れ確認）**
+- [x] **Step 5: Play して全体を目視確認（受け入れ確認）**
 
 1. キー未設定で Play → 起動直後に「API キー未設定: ダミーデータで表示します」トーストが出て、東京が初期選択され情報パネル・エフェクトが動く。
 2. （任意）`StreamingAssets/config.json` に有効キーを置いて Play → 実データで東京の予報が表示され、取得中はスピナーが回る。
@@ -2919,13 +2919,13 @@ git commit -m "feat: add toast notifications, loading indicator and initial stat
 
 すべての Play Mode 確認が通り、EditMode テスト（`GeoProjection` / `ConditionMapper` / `TimeZone` / `WeatherParser` / `WeatherTimelineSO` / `DummyWeather` / `ApiKeyResolver` / `SnapshotInterpolator` / `SunAngle` / `CityCatalog`）が全緑であること。
 
-- [ ] M1: 地図表示＋自由カメラ操作
-- [ ] M2: 150〜200 都市の光柱マーカーが正しい位置に配置
-- [ ] M3: 予報取得→`WeatherSnapshot[]`（JST）→`WeatherTimelineSO`、無キー/失敗でダミー成立
-- [ ] M4: マーカークリック→取得→`OnSnapshotChanged` フロー
-- [ ] M5: 雲・雨・雪・時間帯連動の空がコンディションに追従
-- [ ] M6: タイムライン再生・スライダー・情報パネル・トースト・初期都市（東京）
-- [ ] README に API キー設定手順（`config.example.json` → `config.json`）を記載
+- [x] M1: 地図表示＋自由カメラ操作
+- [x] M2: 150〜200 都市の光柱マーカーが正しい位置に配置
+- [x] M3: 予報取得→`WeatherSnapshot[]`（JST）→`WeatherTimelineSO`、無キー/失敗でダミー成立
+- [x] M4: マーカークリック→取得→`OnSnapshotChanged` フロー
+- [x] M5: 雲・雨・雪・時間帯連動の空がコンディションに追従
+- [x] M6: タイムライン再生・スライダー・情報パネル・トースト・初期都市（東京）
+- [x] README に API キー設定手順（`config.example.json` → `config.json`）を記載
 
 ---
 
