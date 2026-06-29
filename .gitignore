@@ -123,3 +123,6 @@ UnityProject/Assets/StreamingAssets/config.json.meta
 
 # Downloaded source assets (not redistributed; see docs/qgis-gdal-japan-map-guide.md)
 download_resources/
+
+# MCP screenshots
+UnityProject/Assets/Screenshots/
