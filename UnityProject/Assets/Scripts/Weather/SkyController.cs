@@ -36,7 +36,8 @@ namespace JapanWeatherDemo.Weather
 
             // コンディションで光量と色温度の目標を決める
             float cloudDim = Mathf.Lerp(1f, 0.35f, s.cloudCoverage);
-            targetIntensity = Mathf.Max(0f, targetElevation > 0 ? cloudDim : 0.05f);
+            // 夜でも地図が視認できる最低照度を確保（真っ黒回避）
+            targetIntensity = targetElevation > 0 ? cloudDim : 0.18f;
 
             // 朝夕はオレンジ寄り、昼は白、夜は青み
             if (targetElevation <= 0f) targetColor = new Color(0.4f, 0.5f, 0.8f);      // 夜
@@ -51,7 +52,9 @@ namespace JapanWeatherDemo.Weather
             curIntensity = Mathf.MoveTowards(curIntensity, targetIntensity, followSpeed * Time.deltaTime);
             curColor = Color.Lerp(curColor, targetColor, followSpeed * Time.deltaTime);
 
-            sun.transform.rotation = Quaternion.Euler(curElevation, sunYaw, 0f);
+            // 夜（太陽が地平線下）でも光が地図の上面に当たるよう、照射角度に下限を設ける
+            float lightPitch = Mathf.Max(curElevation, 12f);
+            sun.transform.rotation = Quaternion.Euler(lightPitch, sunYaw, 0f);
             // HDRP は HDAdditionalLightData.intensity（Lux）が実効値。Light.intensity 直接では暗くなる。
             if (sunHD != null) sunHD.intensity = curIntensity * 100000f;
             else sun.intensity = curIntensity * 3.14f;
