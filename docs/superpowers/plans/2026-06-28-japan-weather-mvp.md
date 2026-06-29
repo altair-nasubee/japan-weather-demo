@@ -2386,6 +2386,11 @@ git commit -m "feat: add precipitation controller with rain and snow VFX"
 
 `WeatherSnapshot.dateTime` の時刻から `SunAngle` で `DirectionalLight` の角度を決め、コンディションで空の露光/色味を変える。朝・昼・夕・夜を滑らかに遷移。
 
+> **as-built 差分（commit 69403ca / 8567f6d 等）**：下の Step 1 のコードは初版。実装では以下を変更している。
+> - **太陽光は HDRP の Lux で制御**：`Light.intensity` 直接ではなく `HDAdditionalLightData.intensity = curIntensity * 100000f`（取得できない場合のみ `sun.intensity = curIntensity * 3.14f` にフォールバック）。
+> - **夜でも地図が見える最低照度**：夜間の光量を `0.05`/`0` ではなく **`0.99` を下限**として確保（`targetIntensity = targetElevation > 0 ? Mathf.Max(cloudDim, 0.99f) : 0.99f`）。
+> - **照射角度の下限**：太陽が地平線下でも光が地図上面に当たるよう pitch に下限 `12°` を設定（`Mathf.Max(curElevation, 12f)`）。
+
 **Files:**
 - Create: `UnityProject/Assets/Scripts/Weather/SkyController.cs`
 - Modify: `UnityProject/Assets/Scenes/MainScene.unity`（PhysicallyBasedSky を Volume に追加、`Sun` 参照）
@@ -2468,7 +2473,7 @@ Expected: コンソールにエラー無し。
 
 - [x] **Step 4: Play して目視確認**
 
-Play し、タイムライン上で時刻が朝→昼→夕→夜と進む（または異なる時刻のスナップに切替）と、太陽の角度・明るさ・色が滑らかに変化すること。曇り/雨で全体が暗くなること。Expected: 夜は暗く青み、朝夕はオレンジ、昼は明るい白。
+Play し、タイムライン上で時刻が朝→昼→夕→夜と進む（または異なる時刻のスナップに切替）と、太陽の角度・明るさ・色が滑らかに変化すること。曇り/雨で全体が暗くなること。Expected: 夜は青みがかるが地図がはっきり見える明るさを保ち、朝夕はオレンジ、昼は明るい白。（as-built で夜は最低照度 `0.99` を確保。上の差分注記参照）
 
 - [x] **Step 5: コミット**
 
@@ -2488,6 +2493,8 @@ git commit -m "feat: add sky controller for time-of-day sun and condition lighti
 ### Task 6.1: 連続位置補間 API とタイムライン UI ✅ 実装済み（commit 241c3b0、下部 TimelinePanel、日本語 TMP、MCP 構築）
 
 `WeatherTimelineSO` に連続位置（float）から補間スナップを発火する API を追加し、`TimelineUIController` で再生・スライダーを実装する。
+
+> **as-built 差分（commit 598b982 / 05f066e）**：再生/一時停止ボタンは下の Step 4 の `TMP_Text playButtonLabel`（`▶ 再生` / `❚❚ 停止` の絵文字テキスト）ではなく、**アイコン Sprite を表示する `Image`** に変更している。`TimelineUIController` は `playIcon`（`Image`）・`playSprite`・`pauseSprite` を参照し、再生状態に応じて `UpdatePlayIcon()` で sprite を切り替える。Sprite は `Assets/Textures/Icons/icon_play.png`（白い三角）と `icon_pause.png`（白い二本線）。
 
 **Files:**
 - Modify: `UnityProject/Assets/Scripts/Data/WeatherTimelineSO.cs`（`SetContinuousIndex` 追加）
@@ -2659,8 +2666,8 @@ namespace JapanWeatherDemo.UI
 - [x] **Step 6: シーンに TimelinePanel を構築**
 
 - `Canvas`（Screen Space - Overlay）を作り、子に `TimelinePanel`（下部固定: アンカー下、横いっぱい）。
-- `TimelinePanel` 内に `Slider`、`Button`（子 TMP_Text `playButtonLabel`）、`TMP_Text dateTimeLabel`（"2024/06/28 09:00"）を配置。
-- 空 GameObject or Canvas に `TimelineUIController` をアタッチし、各参照（`gameManager`/`slider`/`playButton`/`dateTimeLabel`/`playButtonLabel`）を割当て。`GameManager.timelineUI` にこの参照を割当て。
+- `TimelinePanel` 内に `Slider`、`Button`（子 `Image` の再生/一時停止アイコン）、`TMP_Text dateTimeLabel`（"2024/06/28 09:00"）を配置。
+- 空 GameObject or Canvas に `TimelineUIController` をアタッチし、各参照（`gameManager`/`slider`/`playButton`/`dateTimeLabel`/`playIcon`/`playSprite`/`pauseSprite`）を割当て。`GameManager.timelineUI` にこの参照を割当て。（as-built。初版は `playButtonLabel`。上の差分注記参照）
 
 - [x] **Step 7: Play して目視確認**
 

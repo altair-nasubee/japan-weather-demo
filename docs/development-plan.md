@@ -66,7 +66,9 @@ MVP として最初に完成させる機能。
 天気データを `WeatherTimelineSO`（ScriptableObject）に集約し、C# event で各コントローラーに伝播する。  
 UI・エフェクト・マップは互いを直接参照せず、イベント経由で疎結合に保つ。
 
-**初期化順序：** `GameManager` が起動時に `WeatherTimelineSO` のランタイムインスタンスを生成し、各コントローラー（UI・エフェクト）はそれを購読する。購読が生成より先に走らないよう、Script Execution Order で `GameManager` を他コンポーネントより先に初期化する。
+**初期化順序：** `GameManager` が `WeatherTimelineSO` のランタイムインスタンスを保持し、各コントローラー（UI・エフェクト）はそれを購読する。
+
+> **実装での調整（as-built）**：`Timeline` は `Awake` で生成するのではなく、**初回アクセス時に遅延生成するプロパティ**にしている（`Timeline => _timeline ??= ScriptableObject.CreateInstance<WeatherTimelineSO>()`）。これにより、どのコントローラーが先に購読しても初回アクセスでインスタンスが用意され、購読が生成より先に走る競合が原理的に起きない。Script Execution Order でも `GameManager` を先（-100）に設定しているが、生成順序への依存はこの遅延生成で解消済み。
 
 ### データフロー
 
@@ -253,6 +255,8 @@ public struct WeatherSnapshot
 - `PhysicallyBasedSky` の露光・色温度
 - 朝（5〜7時）・昼（10〜14時）・夕（17〜19時）・夜（20〜4時）を滑らかに遷移
 
+> **実装での調整（as-built）**：夜でも地図がはっきり視認できるよう、`SkyController` は夜間に光量を真っ暗にせず最低照度（intensity `0.99`）を確保する。さらに太陽が地平線下にあるときも光が地図の上面に当たるよう、照射角度（pitch）に下限（12°）を設けている。色味は夜＝青み・朝夕＝オレンジ・昼＝白のまま。HDRP では `HDAdditionalLightData.intensity`（Lux）が実効値のため、太陽光量はそちらで制御する。
+
 ### タイムライン補間
 
 隣接する 2 スナップショット間（3 時間）を線形補間し、スライダー操作・再生中の視覚変化をなめらかにする。
@@ -281,6 +285,7 @@ public struct WeatherSnapshot
 ```
 
 - **情報パネル（右上固定・MVP）**：選択中の都市名・天気コンディション・気温を表示。`OnSnapshotChanged` で更新。
+- **タイムラインの再生/一時停止ボタン（下部固定・MVP）**：絵文字テキストではなくアイコン Sprite（`Assets/Textures/Icons/icon_play.png` 三角・`icon_pause.png` 二本線）を `Image` に表示し、`TimelineUIController` が再生状態に応じて sprite を切り替える。
 - ※ **検索パネル（左上・MVP 後の拡張機能）**：MVP では地図上のマーカークリックのみで都市選択。
 
 ### UI の依存
