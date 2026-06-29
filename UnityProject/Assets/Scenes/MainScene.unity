@@ -253,7 +253,7 @@ Transform:
   m_GameObject: {fileID: 133200932}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 4, z: 0}
+  m_LocalPosition: {x: 0, y: 0.9, z: 0}
   m_LocalScale: {x: 2, y: 1, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2507,8 +2507,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: JapanWeatherDemo::JapanWeatherDemo.CameraControl.CameraFocusController
   mapManager: {fileID: 79078805}
   freeCamera: {fileID: 1254974750}
-  height: 14
-  backDistance: 10
+  height: 2.9
+  backDistance: 2.1
   lookAtYOffset: 0
   duration: 0.7
 --- !u!1 &1360368951
@@ -7341,7 +7341,7 @@ Transform:
   m_GameObject: {fileID: 1360368951}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 6, z: 0}
+  m_LocalPosition: {x: 0, y: 1.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -13406,7 +13406,7 @@ Transform:
   m_GameObject: {fileID: 2002338534}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 6, z: 0}
+  m_LocalPosition: {x: 0, y: 1.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
