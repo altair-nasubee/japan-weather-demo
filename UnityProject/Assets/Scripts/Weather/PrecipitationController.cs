@@ -1,20 +1,21 @@
 using UnityEngine;
-using UnityEngine.VFX;
 using JapanWeatherDemo.Data;
 
 namespace JapanWeatherDemo.Weather
 {
-    /// <summary>rainIntensity とコンディションに応じて雨/雪 VFX の放出量を制御する。</summary>
+    /// <summary>
+    /// rainIntensity とコンディションに応じて雨/雪 ParticleSystem の放出量を制御する。
+    /// VFX Graph はミニチュア俯瞰デモでの調整が難しいため ParticleSystem を採用。
+    /// </summary>
     public class PrecipitationController : MonoBehaviour
     {
         [SerializeField] private GameManager gameManager;
-        [SerializeField] private VisualEffect rainVfx;
-        [SerializeField] private VisualEffect snowVfx;
-        [SerializeField] private float maxRainRate = 4000f;
-        [SerializeField] private float maxSnowRate = 1500f;
-        [SerializeField] private float followSpeed = 6000f;
+        [SerializeField] private ParticleSystem rainPS;
+        [SerializeField] private ParticleSystem snowPS;
+        [SerializeField] private float maxRainRate = 3000f;
+        [SerializeField] private float maxSnowRate = 800f;
+        [SerializeField] private float followSpeed = 4000f;
 
-        private static readonly int SpawnRateId = Shader.PropertyToID("SpawnRate");
         private float targetRain, targetSnow, curRain, curSnow;
 
         private void OnEnable()
@@ -40,8 +41,8 @@ namespace JapanWeatherDemo.Weather
         {
             curRain = Mathf.MoveTowards(curRain, targetRain, followSpeed * Time.deltaTime);
             curSnow = Mathf.MoveTowards(curSnow, targetSnow, followSpeed * Time.deltaTime);
-            if (rainVfx != null) rainVfx.SetFloat(SpawnRateId, curRain);
-            if (snowVfx != null) snowVfx.SetFloat(SpawnRateId, curSnow);
+            if (rainPS != null) { var em = rainPS.emission; em.rateOverTime = curRain; }
+            if (snowPS != null) { var em = snowPS.emission; em.rateOverTime = curSnow; }
         }
     }
 }
