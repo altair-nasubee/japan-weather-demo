@@ -282,54 +282,59 @@ git add UnityProject/Assets/Scripts/Data/MapBoundsSO.cs UnityProject/Assets/Sett
 git commit -m "feat: add MapBoundsSO for shared lat/lon and plane extents"
 ```
 
-### Task 1.3: MainScene と日本地図 Plane
+### Task 1.3: MainScene と日本地図 Plane ✅ 実装済み
 
-Natural Earth のパブリックドメイン地図を日本のバウンディングボックスにトリミングして Plane に貼り、`MapBounds` の Plane 範囲と一致させる。
+> **実装メモ（実態）:** MCP for Unity で構築。コミット 643c075（初期構築）→ de0efe6（露出 Volume 追加・向き仮修正）→ c47aaf8（向き最終確定）。下記は実際に行った手順。
+
+Natural Earth のパブリックドメイン地図を日本のバウンディングボックスに切り出して Plane に貼り、`MapBounds` の Plane 範囲と一致させる。
 
 **Files:**
-- Create: `UnityProject/Assets/Scenes/MainScene.unity`
-- Create: `UnityProject/Assets/Resources/Textures/JapanMap.png`（外部から取得・トリミング）
-- Create: `UnityProject/Assets/Materials/JapanMap.mat`
-- Modify: `UnityProject/Assets/Settings/MapBounds.asset`（テクスチャ図郭に合わせ lat/lon を最終調整）
+- Created: `UnityProject/Assets/Scenes/MainScene.unity`
+- Created: `UnityProject/Assets/Materials/JapanMap.mat`（HDRP/Lit）
+- Created: `UnityProject/Assets/Settings/GlobalVolume.asset`（HDRP Volume プロファイル）
+- Placed: `UnityProject/Assets/Resources/Textures/JapanMap.png`（gdal で日本 bbox に切り出し済み、1470×1350、別ガイド `docs/qgis-gdal-japan-map-guide.md` 参照）
+- `UnityProject/Assets/Settings/MapBounds.asset`: 既定値（lat 24〜46.5 / lon 122〜146.5）のまま（gdal `-projwin` 切り出しが厳密に一致するため調整不要）
 
 **Interfaces:**
 - Consumes: `MapBoundsSO`（Task 1.2）
-- Produces: シーン階層 `[Map]/JapanMapPlane`（y=0）。Task 2.3 のマーカー親 `CityMarkers` をこの下に追加する。
+- Produces: シーン階層に `JapanMapPlane`（y=0）、`Sun`、`MainCamera`、`Global Volume`。
 
-- [ ] **Step 1: 地図テクスチャを用意**
+- [x] **Step 1: 地図テクスチャ**
 
-Natural Earth（https://www.naturalearthdata.com/ ・Public Domain）のラスタ地図（例: "Natural Earth I" または "Natural Earth II with Shaded Relief" の大判 PNG/TIF）をダウンロードし、画像編集ツールで日本のバウンディングボックス（緯度 24.0〜46.5・経度 122.0〜146.5）に等緯度経度（Plate Carrée）のままトリミングする。
-- トリミング後、テクスチャの実際の四隅の緯度経度を記録する（次ステップで `MapBounds` に反映）。
-- 書き出し: `UnityProject/Assets/Resources/Textures/JapanMap.png`。
-- Import Settings: `Texture Type = Default`、`sRGB (Color Texture) = ON`、`Wrap Mode = Clamp`、`Max Size` は 2048 以上。
+`docs/qgis-gdal-japan-map-guide.md` の手順で Natural Earth I（Shaded Relief and Water）を `gdal_translate -projwin 122.0 46.5 146.5 24.0` で切り出し、PNG 化して `Assets/Resources/Textures/JapanMap.png` に配置（1470×1350）。`-projwin` 切り出しなら範囲が `MapBounds` 既定値と厳密一致する。
+- Import Settings: `Texture Type = Default`、`sRGB = ON`、`Max Size` 2048 以上。
 
-- [ ] **Step 2: MapBounds をテクスチャ図郭に合わせる**
+- [x] **Step 2: MapBounds は既定のまま**
 
-`Assets/Settings/MapBounds.asset` の `latMin/latMax/lonMin/lonMax` を、Step 1 で記録したトリミング実図郭に一致させる（ズレ防止のため厳密に）。
+gdal で厳密に切り出したので `MapBounds.asset`（lat 24〜46.5 / lon 122〜146.5）の調整は不要。
 
-- [ ] **Step 3: MainScene を作成**
+- [x] **Step 3: MainScene と必須オブジェクト**
 
-`File > New Scene`（HDRP テンプレート: Basic Outdoors か Empty + HDRP の Volume/Sun）→ `Assets/Scenes/MainScene.unity` として保存。
-最低限: `Directional Light`（名前 `Sun`）、`Camera`（名前 `MainCamera`）、HDRP の `Global Volume`。
+`Assets/Scenes/MainScene.unity` を新規作成し、以下を配置：
+- `Sun`: Directional Light。**HDRP では `HDAdditionalLightData` を明示追加し、`intensity = 100000`（Lux）にする**（無い／弱いと描画が破綻・暗転）。rotation 例 (50, -30, 0)。
+- `MainCamera`: Camera + `FreeCameraController`（Task 1.4）。**`HDAdditionalCameraData` を明示追加**。tag `MainCamera`、pos (0,18,-12)、rot (55,0,0)。
+- `Global Volume`: `Volume`（isGlobal）+ プロファイル `Settings/GlobalVolume.asset`。**`Exposure` を Mode=Fixed / Fixed Exposure=EV15 にする**（無いと露出が暴れて白飛び・暗転する）。`VisualEnvironment` + `PhysicallyBasedSky` + `VolumetricClouds` は M5 で追加（それまで背景は黒）。
 
-- [ ] **Step 4: 地図 Plane を配置**
+> **HDRP の落とし穴:** スクリプト/MCP で Light・Camera を作ると `HDAdditional*Data` が自動付与されない場合がある。明示的に AddComponent すること。
 
-- `GameObject > 3D Object > Plane` を作成、名前 `JapanMapPlane`、`Position = (0,0,0)`。
-- Unity の Plane は 10×10 ユニット（XZ）。`MapBounds` の Plane 範囲（既定 -10〜10 = 20 ユニット）に合わせ、`Scale = (2, 1, 2)` にする（または `MapBounds` の planeMin/Max を ±5 に変更して Scale=1）。**どちらかに統一し、Plane の実寸と MapBounds.planeMin/Max を必ず一致させる。**
-- `Materials/JapanMap.mat`（HDRP/Lit、Base Map に `JapanMap.png`）を割り当て、テクスチャの向き（北が +Z、東が +X）を確認。上下/左右が反転する場合は Plane の `Rotation.Y` かマテリアルの Tiling を調整。
+- [x] **Step 4: 地図 Plane を配置（向き補正が重要）**
 
-- [ ] **Step 5: Play して目視確認**
+- `JapanMapPlane`: Plane プリミティブ、pos (0,0,0)、**scale (2,1,2) = 20×20 ユニット**（`MapBounds` の planeMin/Max ±10 と一致）。
+- マテリアル `JapanMap.mat`（HDRP/Lit、Base Map = `JapanMap.png`）を割当て。
+- **地図の向き補正（必須）:** Unity の Plane UV と Plate Carrée 画像の関係で、素のまま（tiling 1,1）だと南北・東西が両方反転する。Base Map を **tiling `(-1, -1)` / offset `(1, 1)`（180°反転）** に設定して、北=+Z・東=+X（`GeoProjection` と一致）にする。
 
-Play し、上空視点で日本地図が正しい向き（北が奥）で表示されること。Expected: 地図が Plane 全面に表示され、歪み・反転が無い。
+- [x] **Step 5: 向きの検証（目視＋実測）**
 
-- [ ] **Step 6: コミット**
+MainCamera の斜め俯瞰で、北=奥・朝鮮半島=左上・東京=本州太平洋側を確認。確実を期すなら、東京/札幌/那覇の `GeoProjection` 座標にデバッグ球を一時的に置き、地図上の実位置と一致するかで検証する（検証後に球は削除）。
+> **MCP の注意:** 真上からの positioned-capture スクリーンショットは露出が効かず白飛びする。向き確認は MainCamera の斜め俯瞰スクショで行うこと。
 
-```bash
-git add UnityProject/Assets/Scenes/MainScene.unity UnityProject/Assets/Materials/JapanMap.mat UnityProject/Assets/Resources/Textures/JapanMap.png UnityProject/Assets/Settings/MapBounds.asset
-git commit -m "feat: add MainScene with Japan map plane and bounds"
-```
+- [x] **Step 6: コミット済み**
 
-### Task 1.4: 自由カメラ（FreeCameraController）
+コミット 643c075 / de0efe6 / c47aaf8。
+
+### Task 1.4: 自由カメラ（FreeCameraController）✅ 実装済み
+
+> **実装メモ:** スクリプトはコミット b4c5430。MainCamera へのアタッチは Task 1.3 で実施済み。Play でマウス（右ドラッグ回転／ホイールズーム／中ドラッグパン）とキーボード（WASD パン／QE 高度）の操作を確認済み（良好）。
 
 Input System で回転（右ドラッグ）・ズーム（ホイール）・パン（中ドラッグ / WASD）・高度（Q/E）を行う。マウス入力はポインターデバイスから直接読む簡易実装（専用 InputActions アセットは任意）。
 
@@ -552,9 +557,20 @@ git add UnityProject/Assets/Scripts/Data/GeoProjection.cs UnityProject/Assets/Te
 git commit -m "feat: add GeoProjection lat/lon to XZ with tests"
 ```
 
-### Task 2.2: 都市データ構造と Cities.json 生成
+### Task 2.2: 都市データ構造と Cities.json 生成 ✅ 実装済み
 
 `CityData` 構造体と、アマノ技研 CSV から都市を抽出して `Cities.json` を出力するエディタ拡張、そして実行時にそれを読む `CityCatalog`。
+
+> **実装メモ（実態）:**
+> - Step 1〜4（`CityData` / `CityCatalog` / `CityCatalogTests`）は計画どおり実装（コミット **44f635e**、テスト 2/2 緑）。
+> - Step 5〜8（`CitiesJsonGenerator` と `Cities.json`）は、**実データ（アマノ技研 `r0801puboffice_utf8.csv`）が計画の想定（カンマ区切り・prefecture 列あり）と違ったため作り直した**（コミット **7cea1be**、**145 都市**生成）。実コードは `Assets/Scripts/Editor/CitiesJsonGenerator.cs` を参照。実態の要点：
+>   - **タブ区切り（TSV）**。列は `[0]jiscode [1]name [2]namekana [3]building [4]zipcode [5]address [6]tel [7]source [8]lat [9]long [10]note`。
+>   - **prefecture 列は無い** → `jiscode / 1000` を都道府県コードにしてマップで都道府県名を導出。
+>   - **東京特例**: 市が無いので東京都庁（jiscode 13000）を `name="東京"` として採用。
+>   - 県庁所在地＋政令市＋中核市＋主要市の**ホワイトリスト**に一致する市の本庁行のみ採用（政令市の「区」行は名前不一致で自動除外）。
+>   - 入力 CSV は `download_resources/r0801puboffice_utf8.csv` 固定パス（ダイアログ無しでメニュー `JapanWeatherDemo/Generate Cities.json from amano CSV` から実行）。`download_resources/` は `.gitignore` 済み。
+>   - 座標は地理院/数値地図由来（JGD2011≒WGS84）でそのまま使用（変換不要）。
+> - **下記 Step 5 の逐語コードは当初案**（カンマ区切り・prefecture 列前提）であり、実装では使っていない。参考として残す。
 
 **Files:**
 - Create: `UnityProject/Assets/Scripts/Data/CityData.cs`
