@@ -1,29 +1,30 @@
 # 設計仕様：光柱マーカー → ビルボードピンマーカー
 
 - 日付: 2026-06-30
+- 状態: ✅ **実装完了**（[`plans/2026-06-30-billboard-pin-markers.md`](../plans/2026-06-30-billboard-pin-markers.md)）
 - 対象: 地図上の都市マーカー表現の置き換え
-- 関連: `docs/superpowers/specs/2026-06-30-city-dropdown-camera-focus-design.md`（ドロップダウン/カメラフォーカス連携）
+- 関連: [`2026-06-30-city-dropdown-camera-focus-design.md`](2026-06-30-city-dropdown-camera-focus-design.md)（ドロップダウン/カメラフォーカス連携）
 
 ## 1. 目的・背景
 
-現状、各都市マーカーは「光柱」（HDRP emissive 円柱メッシュ + 選択時のみ有効な point light + capsule collider）で表現している（`Assets/Scripts/Map/CityMarker.cs` / `Assets/Prefabs/CityMarker.prefab`）。
+MVP 時点では各都市マーカーは「光柱」（HDRP emissive 円柱メッシュ + 選択時のみ有効な point light + capsule collider）で表現していた。
 
-これを廃止し、各地点に **ピンアイコン画像 + 地点名ラベル** を 2D で表示する **ビルボードマーカー**（常にカメラに正対）へ置き換える。ピンをクリックすると色が変わり選択状態が分かるようにする。
+これを廃止し、各地点に **ピンアイコン画像 + 地点名ラベル** を 2D で表示する **ビルボードマーカー**（常にカメラに正対）へ置き換えた。ピンをクリックすると色が変わり選択状態が分かる。
 
 ## 2. 要件
 
 ### 機能要件
-- 各都市（145 地点）に **ピンアイコン画像** を常時表示する。
+- 各都市（**100 地点**）に **ピンアイコン画像** を常時表示する。
 - ピンは **ビルボード**：常にカメラへ正対する。
 - ピンの **見た目の大きさは画面上一定**（カメラ距離に依らず一定ピクセルサイズ。ズームしても巨大化しない）。
-- **地点名テキスト** は、その地点が **ホバー中 または 選択中** のときだけ表示する（通常は非表示。常時 145 個表示すると密集地で重なり読めなくなるため）。
+- **地点名テキスト** は、その地点が **ホバー中 または 選択中** のときだけ表示する（通常は非表示。常時 100 個表示すると密集地で重なり読めなくなるため）。
 - ピンを **クリックすると選択** され、ピン色が変わって選択中と分かる。
 - 既存の連携を維持：選択は `MapManager.CitySelected`（ドロップダウン双方向同期）と `MapManager.CityFocused`（カメラフォーカス）を従来どおり発火する。
 
 ### 非機能要件
 - HDRP で確実に描画されること。
 - カメラ操作（`FreeCameraController` のドラッグ回転/ズーム）を阻害しないこと。
-- 145 マーカーで実用的なパフォーマンス（毎フレームのビルボード更新・hover 用 raycast は 1 本に限定）。
+- 100 マーカーで実用的なパフォーマンス（毎フレームのビルボード更新・hover 用 raycast は 1 本に限定）。
 
 ## 3. 設計判断
 
@@ -54,14 +55,13 @@
 - 白ベースの滴形マップピン（下が尖り上が円。透過 PNG）。
 - Sprite としてインポート（既存アイコンと同様の設定）。
 
-### 4.2 `CityMarker.cs`（書き換え）
+### 4.2 `CityMarker.cs`（書き換え済み）
 責務：1 都市のビルボードピン。カメラ正対・画面一定サイズ・選択/ホバー状態の見た目を管理し、クリックを通知する。
 
-- 撤去：`beamLight`、`beamRenderer`、emissive/nits 関連ロジック。
+- 撤去済み：`beamLight`、`beamRenderer`、emissive/nits 関連ロジック。
 - フィールド（SerializeField）：
   - `Image pin`（ピン画像）
   - `TMP_Text label`（地点名）
-  - `Canvas canvas`（任意。子の World-Space Canvas）
 - 公開 API（既存互換を維持）：
   - `CityData City { get; }`
   - `event Action<CityMarker> Clicked`
@@ -70,37 +70,29 @@
   - `void NotifyClicked()` — `Clicked` 発火（`MapManager` の raycast ヒット時）。
 - 追加 API：
   - `void SetHover(bool)` — ホバー状態を更新。ラベル表示は「選択 or ホバー」で決定。
-- 色：`baseColor`（通常）/ `selectedColor`（選択、例：黄系）。ホバー時の追加ハイライト有無は実装時に簡潔さ優先で決める（最小では「選択 or ホバーでラベル表示、色は base/selected の2値」）。
-- `Update()`（または LateUpdate）：ビルボード正対 + 画面一定サイズスケール。カメラ参照は `Camera.main` か MapManager から注入。
+  - `void SetCamera(UnityEngine.Camera c)` — カメラ参照を注入。
+- 色：`baseColor`（通常）/ `selectedColor`（選択）。ホバー時はラベル表示のみ変化（色は base/selected の 2 値）。
+- `LateUpdate()`：ビルボード正対 + 画面一定サイズスケール（`BillboardScale` 純関数を使用）。
 
-### 4.3 ビルボードスケール純関数（新規、テスト対象）
-- 配置先候補：`Assets/Scripts/Map/`（例 `BillboardScale.cs`、static）または `CityMarker` 内の static メソッド。
-- 入力：カメラからマーカーまでの距離（またはカメラ位置・マーカー位置）、基準スケール係数、（必要なら）視野/参照距離。
-- 出力：画面上一定サイズになる `localScale`（float）。
-- EditMode テスト：距離 2 倍でスケール 2 倍など、画面サイズ一定性を検証（既存 `CameraFramingTests` と同様のパターン）。
+### 4.3 ビルボードスケール純関数（実装済み）
+- `Assets/Scripts/Map/BillboardScale.cs`（static）
+- EditMode テスト：`BillboardScaleTests`（2 件）
 
-### 4.4 `MapManager.cs`（変更）
-- `BuildMarkers()`：現状維持（位置 = `GeoProjection.LatLonToXZ`、`markerY` でピンを地図上に浮かせる）。`markerY` はピン下端が地図に接するよう実装時に調整。
-- `Update()`：
-  - マウス下を 1 本 raycast し、当たったマーカーを **hover 対象** とする（`currentHover` を保持し、変化時に旧 hover を `SetHover(false)`、新 hover を `SetHover(true)`）。
-  - UI 上（`EventSystem.IsPointerOverGameObject()`）では hover/クリックを無視。
-  - 左クリックで従来どおり選択（`Select`）。
+### 4.4 `MapManager.cs`（変更済み）
+- `BuildMarkers()`：`GeoProjection.LatLonToXZ` で配置、`marker.SetCamera(raycastCamera)` を注入。
+- `Update()`：1 本 raycast で hover/クリック。UI 上では無視。
 - `Select` / `SelectByName` / `CitySelected` / `CityFocused`：不変。
 
-### 4.5 プレハブ再構築：`CityMarker.prefab`
-Unity Editor（MCP）作業。
-- root：`CityMarker`（書き換え後）+ `BoxCollider`（ピンの見た目を覆うサイズ）。
-- 子：World-Space `Canvas`
-  - `Image`（pin.png、白ベース、`Image.color` で tint）
-  - `TMP_Text`（Noto Sans JP SDF、地点名、初期非表示）
-- 旧 emissive 円柱メッシュ・point light は削除。
-- MapManager の参照（`markerPrefab` 等）を新プレハブに再設定。
+### 4.5 プレハブ：`CityMarker.prefab`（再構築済み）
+- root：`CityMarker` + `BoxCollider`
+- 子：World-Space `Canvas` → `Image`（pin.png）+ `TMP_Text`（地点名）
+- 旧 emissive 円柱メッシュ・point light は削除済み。
 
 ## 5. 影響範囲・非対象
 
 ### 影響
 - `CityMarker.cs`、`MapManager.cs`、`CityMarker.prefab`、`MainScene`（プレハブ差し替え/参照再設定）。
-- 光柱の glow（Bloom 連動）は無くなる。Bloom 設定自体（空/雲/降水）はそのまま残す。
+- 光柱の glow（Bloom 連動）は無くなった。Bloom 設定自体（空/雲/降水）はそのまま残す。
 
 ### 非対象（変更しない）
 - 天候エフェクト（空・ライト・雲・降水）。
@@ -110,18 +102,18 @@ Unity Editor（MCP）作業。
 ## 6. テスト・受け入れ
 
 ### 自動テスト（EditMode）
-- ビルボードスケール純関数のテスト（画面一定サイズ性）。
-- 既存テスト（48/48）は全て green を維持。
+- ビルボードスケール純関数のテスト（`BillboardScaleTests`、2 件）。
+- 既存テストを含め **46/46** green を維持。
 
-### Play モード目視確認
-- 145 ピンが正しい地点に表示される。
+### Play モード目視確認（完了）
+- 100 ピンが正しい地点に表示される。
 - カメラを回転/ズームしてもピンは正対し、画面上サイズが一定。
 - ピンにマウスを乗せると地点名が表示され、外すと消える。
 - ピンをクリックすると色が変わり、地点名が表示され続ける（選択維持）。
 - 選択がドロップダウンに同期し、カメラがその都市にフォーカスする。
 - ピン上/間でのカメラドラッグ操作が破綻しない。
 
-## 7. 作業順序（概略・詳細は実装計画で）
+## 7. 作業順序（実施済み）
 1. ピン画像生成 + インポート。
 2. ビルボードスケール純関数 + EditMode テスト（TDD）。
 3. `CityMarker.cs` 書き換え（ビルボード/状態/ラベル）。

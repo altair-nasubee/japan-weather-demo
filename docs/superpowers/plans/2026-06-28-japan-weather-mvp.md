@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status:** ✅ MVP 完了（2026-06-30）。M1〜M6 すべて完了。MVP 後の拡張として都市ドロップダウン＋カメラフォーカス・ビルボードピンマーカーも完了（下記「MVP 後の追記」参照）。
+
 **Goal:** OpenWeatherMap の予報データを取得し、HDRP の日本地図上で都市を選択して気象エフェクトとタイムラインで可視化する Windows デモアプリの MVP を完成させる。
 
 **Architecture:** 天気データを `WeatherTimelineSO`（ランタイム ScriptableObject）に集約し、C# event `OnSnapshotChanged` で各コントローラー（雲・降水・空・タイムライン UI・情報パネル）へ疎結合に伝播する。純ロジック（座標変換・JSON パース・天気コード分類・UTC→JST 変換・スナップショット補間）は MonoBehaviour 非依存の静的クラスに切り出し、EditMode 単体テストで TDD する。シーン構築・エフェクト・UI など見た目部分は Play Mode 目視で確認する。
@@ -52,7 +54,7 @@
 | `Weather/CloudController.cs` | Volumetric Clouds 制御（`OnSnapshotChanged` 購読） |
 | `Weather/PrecipitationController.cs` | 雨・雪 VFX 制御（同上） |
 | `Weather/SkyController.cs` | PhysicallyBasedSky・DirectionalLight の時間帯制御（同上） |
-| `Map/MapManager.cs` | `CityCatalog` からマーカー（光柱）を生成・配置・選択管理 |
+| `Map/MapManager.cs` | `CityCatalog` からビルボードピンマーカーを生成・配置・選択管理 |
 | `Map/CityMarker.cs` | マーカー 1 個。クリック判定と選択通知 |
 | `Camera/FreeCameraController.cs` | 自由カメラ（Input System、回転/ズーム/パン） |
 | `UI/TimelineUIController.cs` | DateTime 表示・再生・スライダー同期 |
@@ -79,7 +81,7 @@
 | パス | 内容 |
 |------|------|
 | `UnityProject/Assets/Scenes/MainScene.unity` | メインシーン |
-| `UnityProject/Assets/StreamingAssets/Cities.json` | 都市マスタ（150〜200 都市） |
+| `UnityProject/Assets/StreamingAssets/Cities.json` | 都市マスタ（100 都市） |
 | `UnityProject/Assets/StreamingAssets/DummyForecast.json` | ダミー予報（任意・コード生成で代替可） |
 | `UnityProject/Assets/StreamingAssets/config.example.json` | API キー設定サンプル（キー空欄） |
 | `UnityProject/Assets/Settings/MapBounds.asset` | `MapBoundsSO` インスタンス |
@@ -439,7 +441,9 @@ git commit -m "feat: add free camera controller using Input System"
 
 ## Milestone 2 — 都市マスタ + マーカー配置
 
-**完了の目安:** `Cities.json`（150〜200 都市）を読み込み、`GeoProjection` による lat/lon→XZ 変換で各都市の位置に光柱マーカーが正しく並ぶ。札幌が北、那覇が南西、東京が中央付近に見える。
+**完了の目安:** `Cities.json`（100 都市）を読み込み、`GeoProjection` による lat/lon→XZ 変換で各都市の位置にマーカーが正しく並ぶ。札幌が北、那覇が南西、東京が中央付近に見える。
+
+> **as-built（2026-06-30）:** MVP 時は光柱マーカーだったが、のちビルボードピンに置き換え済み。都市数は当初 145 件生成後、**100 都市**に確定。
 
 ### Task 2.1: 座標変換（GeoProjection）— TDD ✅ 実装済み
 
@@ -566,7 +570,7 @@ git commit -m "feat: add GeoProjection lat/lon to XZ with tests"
 
 > **実装メモ（実態）:**
 > - Step 1〜4（`CityData` / `CityCatalog` / `CityCatalogTests`）は計画どおり実装（コミット **44f635e**、テスト 2/2 緑）。
-> - Step 5〜8（`CitiesJsonGenerator` と `Cities.json`）は、**実データ（アマノ技研 `r0801puboffice_utf8.csv`）が計画の想定（カンマ区切り・prefecture 列あり）と違ったため作り直した**（コミット **7cea1be**、**145 都市**生成）。実コードは `Assets/Scripts/Editor/CitiesJsonGenerator.cs` を参照。実態の要点：
+> - Step 5〜8（`CitiesJsonGenerator` と `Cities.json`）は、**実データ（アマノ技研 `r0801puboffice_utf8.csv`）が計画の想定（カンマ区切り・prefecture 列あり）と違ったため作り直した**（コミット **7cea1be**、当初 **145 都市**生成 → その後抽出条件を見直し **100 都市**に確定）。実コードは `Assets/Scripts/Editor/CitiesJsonGenerator.cs` を参照。実態の要点：
 >   - **タブ区切り（TSV）**。列は `[0]jiscode [1]name [2]namekana [3]building [4]zipcode [5]address [6]tel [7]source [8]lat [9]long [10]note`。
 >   - **prefecture 列は無い** → `jiscode / 1000` を都道府県コードにしてマップで都道府県名を導出。
 >   - **東京特例**: 市が無いので東京都庁（jiscode 13000）を `name="東京"` として採用。
@@ -2924,10 +2928,10 @@ git commit -m "feat: add toast notifications, loading indicator and initial stat
 
 ## MVP 完成チェックリスト
 
-すべての Play Mode 確認が通り、EditMode テスト（`GeoProjection` / `ConditionMapper` / `TimeZone` / `WeatherParser` / `WeatherTimelineSO` / `DummyWeather` / `ApiKeyResolver` / `SnapshotInterpolator` / `SunAngle` / `CityCatalog`）が全緑であること。
+すべての Play Mode 確認が通り、EditMode テスト（`GeoProjection` / `ConditionMapper` / `TimeZone` / `WeatherParser` / `WeatherTimelineSO` / `DummyWeather` / `ApiKeyResolver` / `SnapshotInterpolator` / `SunAngle` / `CityCatalog` / `CameraFraming` / `BillboardScale`）が全緑であること（現行 **46 件**）。
 
 - [x] M1: 地図表示＋自由カメラ操作
-- [x] M2: 150〜200 都市の光柱マーカーが正しい位置に配置
+- [x] M2: 100 都市のビルボードピンマーカーが正しい位置に配置（MVP 時は光柱 → 2026-06-30 にピンへ置き換え）
 - [x] M3: 予報取得→`WeatherSnapshot[]`（JST）→`WeatherTimelineSO`、無キー/失敗でダミー成立
 - [x] M4: マーカークリック→取得→`OnSnapshotChanged` フロー
 - [x] M5: 雲・雨・雪・時間帯連動の空がコンディションに追従
@@ -2936,10 +2940,21 @@ git commit -m "feat: add toast notifications, loading indicator and initial stat
 
 ---
 
+## MVP 後の追記（2026-06-30）
+
+MVP 完了後に以下の拡張も実装済み。詳細は各実装計画・設計書を参照。
+
+| 機能 | 状態 | ドキュメント |
+|------|------|-------------|
+| 都市選択ドロップダウン + カメラフォーカス | ✅ 完了 | [`plans/2026-06-30-city-dropdown-camera-focus.md`](2026-06-30-city-dropdown-camera-focus.md) |
+| ビルボードピンマーカー（光柱から置き換え） | ✅ 完了 | [`plans/2026-06-30-billboard-pin-markers.md`](2026-06-30-billboard-pin-markers.md) |
+
+---
+
 ## 実装フェーズで確定する細部（spec より引き継ぎ）
 
 - **アマノ技研データの測地系**（Task 2.2 Step 6）: WGS84 か日本測地系かを CSV 取り込み時に確認し、日本測地系なら WGS84 へ変換。
 - **Natural Earth テクスチャの実図郭**（Task 1.3 Step 2）: トリミング四隅の lat/lon を `MapBounds` に厳密反映。
-- **150〜200 都市の抽出条件**（Task 2.2 Step 6）: `PrefectureCapitals` ＋ `ExtraMajorCities` を調整し件数を範囲内に。
+- **150〜200 都市の抽出条件**（Task 2.2 Step 6）: `PrefectureCapitals` ＋ `ExtraMajorCities` を調整。**現行は 100 都市に確定**（as-built）。
 - **HDRP の空種別**（Task 5.5）: テンプレ既定の Sky type と `SkyController` の前提（PhysicallyBasedSky）を一致させる。
 

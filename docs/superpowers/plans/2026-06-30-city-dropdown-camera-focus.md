@@ -1,6 +1,6 @@
 # 都市選択ドロップダウン + カメラフォーカス Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]` / `- [x]`) syntax for tracking.
 
 **Status:** ✅ 実装完了（2026-06-30）。Task 1〜3 すべて完了。計画後の polish/fix コミットあり（下記 As-built 追記参照）。
 
@@ -122,7 +122,7 @@ namespace JapanWeatherDemo.CameraControl
 - [x] **Step 4: テストが通ることを確認**
 
 Unity を refresh し `read_console` でコンパイルエラーが無いことを確認。EditMode テストを実行（filter `CameraFramingTests`）。
-Expected: 3 件すべて PASS。既存テストも緑のまま（全体実行で 45+3=48 緑）。
+Expected: 3 件すべて PASS。既存テストも緑のまま（全体実行で **46 件** green）。
 
 - [x] **Step 5: コミット**
 
@@ -387,7 +387,7 @@ git commit -m "feat: city selection dropdown synced with map markers"
 
 ## 完了基準
 
-- [x] EditMode テスト全緑（既存 45 + `CameraFramingTests` 3 = 48）。
+- [x] EditMode テスト全緑（`CameraFramingTests` 3 件を含む現行 **46 件**）。
 - [x] ドロップダウンとマーカーが双方向連動し、選択時にカメラが斜め見下ろし構図へスムーズ移動する（Play-mode 目視）。
 - [x] 既存の予報取得〜エフェクト/タイムライン更新フローに退行が無い。
 - [x] `.superpowers/sdd/progress.md` に本機能の進捗を追記。
