@@ -160,3 +160,13 @@ MapManager（マーカー配置・選択）
 - 実装計画: [`docs/superpowers/plans/2026-06-28-japan-weather-mvp.md`](docs/superpowers/plans/2026-06-28-japan-weather-mvp.md)
 - ビルボードピン設計: [`docs/superpowers/specs/2026-06-30-billboard-pin-markers-design.md`](docs/superpowers/specs/2026-06-30-billboard-pin-markers-design.md)
 - 都市ドロップダウン＋カメラフォーカス設計: [`docs/superpowers/specs/2026-06-30-city-dropdown-camera-focus-design.md`](docs/superpowers/specs/2026-06-30-city-dropdown-camera-focus-design.md)
+
+---
+
+## 開発環境構築手順
+
+- UnityとWindows版Claude Codeのインストールおよび開発環境構築手順： [docs/unity-wsl-claudecode-setup-guide.md](docs/unity-wsl-claudecode-setup-guide.md)
+- Cursor × Unity C# 開発環境 セットアップガイド： [docs/cursor-unity-csharp-setup-guide.md](docs/cursor-unity-csharp-setup-guide.md)
+
+---
+

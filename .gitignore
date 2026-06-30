@@ -126,3 +126,6 @@ download_resources/
 
 # MCP screenshots
 UnityProject/Assets/Screenshots/
+
+# Visual Studio Code settings
+UnityProject/.vscode/

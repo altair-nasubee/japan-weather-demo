@@ -91,6 +91,7 @@ https://github.com/boxqkrtm/com.unity.ide.cursor.git
 4. 下の **Regenerate project files** ボタンをクリックする（`.sln` / `.csproj` を生成・更新する。初回設定時やパッケージ追加後に押す）
 
 **確認:** `Assets` 内の `.cs` ファイルをダブルクリックすると Cursor が開けば OK。
+**備考:** ここまでの手順で `<local repository>/UnityProject/.vscode` フォルダに `extensions.json`, `launch.json`, `settings.json`が生成される。
 
 ---
 
