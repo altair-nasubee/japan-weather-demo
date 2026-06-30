@@ -1,5 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using TMPro;
 using JapanWeatherDemo.Data;
 using JapanWeatherDemo.Map;
@@ -13,6 +16,8 @@ namespace JapanWeatherDemo.UI
         [SerializeField] private TMP_Dropdown dropdown;
 
         private readonly List<string> cityNames = new();
+        private CityDropdownOpenHandler openHandler;
+        private Coroutine scrollCoroutine;
 
         private void Awake()
         {
@@ -23,6 +28,11 @@ namespace JapanWeatherDemo.UI
 
             dropdown.ClearOptions();
             dropdown.AddOptions(cityNames);
+
+            openHandler = dropdown.gameObject.GetComponent<CityDropdownOpenHandler>();
+            if (openHandler == null)
+                openHandler = dropdown.gameObject.AddComponent<CityDropdownOpenHandler>();
+            openHandler.Setup(this);
         }
 
         private void OnEnable()
@@ -35,6 +45,18 @@ namespace JapanWeatherDemo.UI
         {
             dropdown.onValueChanged.RemoveListener(OnDropdownChanged);
             if (mapManager != null) mapManager.CitySelected -= OnCitySelected;
+            if (scrollCoroutine != null)
+            {
+                StopCoroutine(scrollCoroutine);
+                scrollCoroutine = null;
+            }
+        }
+
+        internal void NotifyDropdownClicked()
+        {
+            if (scrollCoroutine != null)
+                StopCoroutine(scrollCoroutine);
+            scrollCoroutine = StartCoroutine(ScrollToSelectedAfterShow());
         }
 
         // ドロップダウン操作 → 既存の選択フローを駆動
@@ -52,6 +74,56 @@ namespace JapanWeatherDemo.UI
             if (index < 0) return;
             dropdown.SetValueWithoutNotify(index);
             dropdown.RefreshShownValue();
+        }
+
+        // TMP_Dropdown は展開時に選択項目へ自動スクロールしないため、開いた直後に合わせる
+        private IEnumerator ScrollToSelectedAfterShow()
+        {
+            yield return null;
+
+            if (!dropdown.IsExpanded)
+            {
+                scrollCoroutine = null;
+                yield break;
+            }
+
+            var listRoot = dropdown.transform.Find("Dropdown List");
+            if (listRoot == null)
+            {
+                scrollCoroutine = null;
+                yield break;
+            }
+
+            int index = Mathf.Clamp(dropdown.value, 0, dropdown.options.Count - 1);
+            int count = dropdown.options.Count;
+            if (count > 1)
+            {
+                var scrollRect = listRoot.GetComponent<ScrollRect>();
+                if (scrollRect != null)
+                {
+                    Canvas.ForceUpdateCanvases();
+                    float normalized = 1f - (float)index / (count - 1);
+                    scrollRect.normalizedPosition = new Vector2(0f, normalized);
+                }
+            }
+
+            foreach (var toggle in listRoot.GetComponentsInChildren<Toggle>(false))
+            {
+                if (!toggle.isOn) continue;
+                toggle.Select();
+                break;
+            }
+
+            scrollCoroutine = null;
+        }
+
+        sealed class CityDropdownOpenHandler : MonoBehaviour, IPointerClickHandler
+        {
+            CityDropdownController controller;
+
+            public void Setup(CityDropdownController controller) => this.controller = controller;
+
+            public void OnPointerClick(PointerEventData eventData) => controller?.NotifyDropdownClicked();
         }
     }
 }
