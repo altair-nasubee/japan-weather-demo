@@ -12,8 +12,8 @@ namespace JapanWeatherDemo.Weather
         [SerializeField] private GameManager gameManager;
         [SerializeField] private ParticleSystem rainPS;
         [SerializeField] private ParticleSystem snowPS;
-        [SerializeField] private float maxRainRate = 3000f;
-        [SerializeField] private float maxSnowRate = 800f;
+        [SerializeField] private float maxRainRate = 4000f;
+        [SerializeField] private float maxSnowRate = 2000f;
         [SerializeField] private float followSpeed = 4000f;
 
         private float targetRain, targetSnow, curRain, curSnow;
