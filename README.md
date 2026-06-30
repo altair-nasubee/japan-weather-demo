@@ -16,13 +16,7 @@
 
 | 地図と都市マーカー | 天気エフェクト（雨／雲） | タイムライン再生 |
 |---|---|---|
-| _（準備中）_ | _（準備中）_ | _（準備中）_ |
-
-<!--
-![メイン画面](docs/images/main.png)
-![降水エフェクト](docs/images/rain.png)
-![タイムライン](docs/images/timeline.gif)
--->
+| ![地図とマーカー](docs/images/city-markers-image.png) | [降水エフェクト](docs/images/rain-effect-image.png) | ![タイムライン](docs/images/weather-timeline.gif) |
 
 ---
 
