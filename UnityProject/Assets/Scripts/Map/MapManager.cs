@@ -38,27 +38,46 @@ namespace JapanWeatherDemo.Map
                 var marker = Instantiate(markerPrefab, markerParent);
                 marker.transform.position = new Vector3(xz.x, markerY, xz.y);
                 marker.Init(city);
+                marker.SetCamera(raycastCamera);
                 marker.Clicked += OnMarkerClicked;
                 markers.Add(marker);
             }
         }
 
+        private CityMarker hovered;
+
         private void Update()
         {
-            var mouse = Mouse.current;
-            if (mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
+            // UI（タイムライン・情報パネル等）の上では地図の hover/クリックを無視する
+            bool overUI = UnityEngine.EventSystems.EventSystem.current != null &&
+                          UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
 
-            // UI（タイムライン・情報パネル等）の上では地図クリックを無視する
-            if (UnityEngine.EventSystems.EventSystem.current != null &&
-                UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
+            var mouse = Mouse.current;
+            if (mouse == null || overUI)
+            {
+                SetHover(null);
+                return;
+            }
 
             Vector2 screen = mouse.position.ReadValue();
             Ray ray = raycastCamera.ScreenPointToRay(screen);
-            if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
-            {
-                var marker = hit.collider.GetComponentInParent<CityMarker>();
-                if (marker != null) marker.NotifyClicked();
-            }
+            CityMarker hit = null;
+            if (Physics.Raycast(ray, out RaycastHit h, 1000f))
+                hit = h.collider.GetComponentInParent<CityMarker>();
+
+            SetHover(hit);
+
+            if (mouse.leftButton.wasPressedThisFrame && hit != null)
+                hit.NotifyClicked();
+        }
+
+        // ホバー対象の切替を管理する
+        private void SetHover(CityMarker marker)
+        {
+            if (hovered == marker) return;
+            if (hovered != null) hovered.SetHover(false);
+            hovered = marker;
+            if (hovered != null) hovered.SetHover(true);
         }
 
         private void OnMarkerClicked(CityMarker marker) => Select(marker);
