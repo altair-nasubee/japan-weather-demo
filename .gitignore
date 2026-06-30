@@ -128,4 +128,5 @@ download_resources/
 UnityProject/Assets/Screenshots/
 
 # Visual Studio Code settings
+.vscode/
 UnityProject/.vscode/

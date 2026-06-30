@@ -136,6 +136,8 @@ cursor .
 2. **File → Open Folder...**
 3. `C:\work\japan-weather-demo` を選択して **フォルダの選択**
 
+> **補足:** このリポジトリでは Unity プロジェクト本体が `UnityProject/` サブフォルダにある。通常の編集ではリポジトリルートを開いてよいが、**デバッグ時は `C:\work\japan-weather-demo\UnityProject` を直接開く方が安全**。Unity Debugger がワークスペースルートを Unity プロジェクトルートだとみなして `Library/EditorInstance.json` を探すため、1階層上のリポジトリルートを開いていると接続に失敗することがある。
+
 ### 初回は Unity のコンパイルを待つ
 
 1. **Unity Editor を起動したまま**にする
@@ -167,8 +169,25 @@ cursor .
 
 Play モード中にコードを止めて変数を見たい場合の設定。
 
-1. リポジトリに `.vscode` フォルダを作成（Cursor もこの設定を読む）
-2. その中に `launch.json` を作成:
+### 7-1. デバッグ時は `UnityProject` をワークスペースルートとして開く
+
+このリポジトリは `UnityProject/` が Unity プロジェクト本体なので、**デバッグを行うときは `UnityProject` フォルダを直接 Cursor で開く**。
+
+- Unity から `.cs` ファイルをダブルクリックして Cursor を開く
+- あるいは PowerShell で次を実行する
+
+```powershell
+cd C:\work\japan-weather-demo\UnityProject
+cursor .
+```
+
+リポジトリルート `C:\work\japan-weather-demo` を開いたまま `F5` すると、デバッガーが `C:\work\japan-weather-demo\Library\EditorInstance.json` を探してしまい、`UnityProject\Library\EditorInstance.json` を見つけられず失敗することがある。
+
+### 7-2. `UnityProject/.vscode/launch.json` を用意する
+
+1. `UnityProject` フォルダ直下に `.vscode` フォルダを作成する（または自動生成されたものを使う）
+2. その中の `launch.json` を作成または編集する
+3. DotRush 用の設定を追加する:
 
 ```json
 {
@@ -183,9 +202,50 @@ Play モード中にコードを止めて変数を見たい場合の設定。
 }
 ```
 
-3. `.cs` の行番号左をクリックしてブレークポイントを置く
-4. Unity で **Play** を押す
-5. Cursor で **F5** → **Unity Debugger** を選択
+すでに `UnityProject/.vscode/launch.json` が自動生成されている場合は、新しく作り直さず**そのファイルに追記**すればよい。たとえば Unity が次のような内容を生成していることがある:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach to Unity",
+      "type": "vstuc",
+      "request": "attach"
+    }
+  ]
+}
+```
+
+この場合は `vstuc` の設定を残したまま、DotRush 用の設定を追加する:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach to Unity (VSTUC)",
+      "type": "vstuc",
+      "request": "attach"
+    },
+    {
+      "name": "Unity Debugger (DotRush)",
+      "type": "unity",
+      "request": "attach"
+    }
+  ]
+}
+```
+
+既定では `launch.json` の一番上の設定で起動しようとすることがあるため、**先に「実行とデバッグ」で `Unity Debugger (DotRush)` を選んでから `F5`** するのがおすすめ。
+
+### 7-3. デバッグを開始する
+
+1. `.cs` の行番号左をクリックしてブレークポイントを置く
+2. Unity 画面右下の虫アイコンをクリックして、Unity を **Debug モード**に切り替える
+3. Unity で **Play** を押す
+4. Cursor 左の **実行とデバッグ** アイコンを押し、構成として **Unity Debugger (DotRush)** を選択する
+5. `F5` を押す
 
 Unity が起動・Play 中である必要がある。
 
