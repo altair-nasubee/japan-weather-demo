@@ -1,44 +1,71 @@
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 using JapanWeatherDemo.Data;
 
 namespace JapanWeatherDemo.Map
 {
-    /// <summary>地図上の 1 都市を表す光柱マーカー。クリックで選択を通知する。</summary>
+    /// <summary>地図上の 1 都市を表すビルボードピン。常にカメラへ正対し、画面上一定サイズを保つ。
+    /// ホバー/選択時に地点名を表示し、選択時はピン色を変える。クリックで選択を通知する。</summary>
     [RequireComponent(typeof(Collider))]
     public class CityMarker : MonoBehaviour
     {
-        [SerializeField] private Light beamLight;          // 光柱の核となるライト（任意）
-        [SerializeField] private Renderer beamRenderer;    // 光柱メッシュ（円柱など）
+        [SerializeField] private Image pin;        // ピン画像（白ベース、color で tint）
+        [SerializeField] private TMP_Text label;   // 地点名（ホバー/選択時のみ表示）
+        [SerializeField] private float scalePerUnit = 0.01f; // 距離1あたりのワールドスケール
 
         public CityData City { get; private set; }
         public event System.Action<CityMarker> Clicked;
 
-        private Color baseColor = new Color(0.4f, 0.7f, 1f);
-        private Color selectedColor = new Color(1f, 0.85f, 0.3f);
+        private readonly Color baseColor = new Color(0.95f, 0.95f, 0.95f);
+        private readonly Color selectedColor = new Color(1f, 0.85f, 0.3f);
+
+        private UnityEngine.Camera cam;
+        private bool selected;
+        private bool hovered;
 
         public void Init(CityData city)
         {
             City = city;
             name = $"Marker_{city.name}";
-            SetSelected(false);
+            if (label != null) label.text = city.name;
+            selected = false;
+            hovered = false;
+            ApplyState();
         }
 
-        public void SetSelected(bool selected)
+        public void SetCamera(UnityEngine.Camera c) => cam = c;
+
+        public void SetSelected(bool value)
         {
-            Color c = selected ? selectedColor : baseColor;
-            // HDRP の _EmissiveColor は nits 相当。地図は太陽光(10万Lux)で約1.6万nits相当に照らされるため、
-            // 光柱を目立たせるにはそれを上回る強度が要る。
-            float emission = selected ? 20000f : 5000f;
-            // 全都市は Emissive メッシュで表現する
-            if (beamRenderer != null)
-                beamRenderer.material.SetColor("_EmissiveColor", c * emission);
-            // リアルタイム Light は選択都市のみ有効化する（HDRP で 150〜200 個の常時ライトは負荷が高いため）
-            if (beamLight != null)
-            {
-                beamLight.enabled = selected;
-                beamLight.color = c;
-                beamLight.intensity = 8f;
-            }
+            selected = value;
+            ApplyState();
+        }
+
+        public void SetHover(bool value)
+        {
+            hovered = value;
+            ApplyState();
+        }
+
+        // ピン色とラベル表示を現在の状態から更新する
+        private void ApplyState()
+        {
+            if (pin != null) pin.color = selected ? selectedColor : baseColor;
+            // ラベルは「選択中 または ホバー中」のときだけ表示する
+            if (label != null) label.gameObject.SetActive(selected || hovered);
+        }
+
+        private void LateUpdate()
+        {
+            if (cam == null) cam = UnityEngine.Camera.main;
+            if (cam == null) return;
+            // 正対：カメラ回転をそのまま採用（テキストが鏡像にならない）
+            transform.rotation = cam.transform.rotation;
+            // 画面上一定サイズ：距離に比例してスケール（collider も同 transform で連動）
+            float dist = Vector3.Distance(cam.transform.position, transform.position);
+            float s = BillboardScale.ScaleForConstantScreenSize(dist, scalePerUnit);
+            transform.localScale = new Vector3(s, s, s);
         }
 
         // MapManager から Raycast ヒット時に呼ばれる
