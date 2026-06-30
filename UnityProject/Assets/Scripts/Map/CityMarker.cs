@@ -17,8 +17,8 @@ namespace JapanWeatherDemo.Map
         public CityData City { get; private set; }
         public event System.Action<CityMarker> Clicked;
 
-        private readonly Color baseColor = new Color(0.95f, 0.95f, 0.95f);
-        private readonly Color selectedColor = new Color(1f, 0.85f, 0.3f);
+        private readonly Color baseColor = new Color(0.45f, 0.65f, 0.85f);      // Color(0.38f, 0.62f, 0.45f);
+        private readonly Color selectedColor = new Color(0.95f, 0.3f, 0.3f);
 
         private UnityEngine.Camera cam;
         private bool selected;
@@ -53,7 +53,10 @@ namespace JapanWeatherDemo.Map
         {
             if (pin != null) pin.color = selected ? selectedColor : baseColor;
             // ラベルは「選択中 または ホバー中」のときだけ表示する
-            if (label != null) label.gameObject.SetActive(selected || hovered);
+            if (label != null) {
+                label.gameObject.SetActive(selected || hovered);
+                label.color = selected ? selectedColor : baseColor;
+            }
         }
 
         private void LateUpdate()
