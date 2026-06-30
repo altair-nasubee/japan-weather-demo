@@ -5,7 +5,7 @@ using JapanWeatherDemo.Data;
 
 namespace JapanWeatherDemo.Map
 {
-    /// <summary>都市マスタを読み、光柱マーカーを配置・選択管理する。</summary>
+    /// <summary>都市マスタを読み、ビルボードピンマーカーを配置・選択管理する。</summary>
     public class MapManager : MonoBehaviour
     {
         [SerializeField] private MapBoundsSO bounds;
