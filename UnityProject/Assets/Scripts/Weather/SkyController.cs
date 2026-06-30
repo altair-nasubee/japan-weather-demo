@@ -34,15 +34,22 @@ namespace JapanWeatherDemo.Weather
             float hour = s.dateTime.Hour + s.dateTime.Minute / 60f;
             targetElevation = SunAngle.ElevationDeg(hour);
 
-            // コンディションで光量と色温度の目標を決める
-            float cloudDim = Mathf.Lerp(1f, 0.35f, s.cloudCoverage);
-            // 夜でも地図がはっきり視認できる最低照度を確保（真っ黒回避）
-            targetIntensity = targetElevation > 0 ? Mathf.Max(cloudDim, 0.99f) : 0.99f;
+            // 昼夜の明暗差は「識別できる程度」に抑える。曇りでも昼/夜らしさは保つ。
+            float cloud = Mathf.Clamp01(s.cloudCoverage);
 
-            // 朝夕はオレンジ寄り、昼は白、夜は青み
-            if (targetElevation <= 0f) targetColor = new Color(0.4f, 0.5f, 0.8f);      // 夜
-            else if (targetElevation < 20f) targetColor = new Color(1f, 0.6f, 0.35f);  // 朝夕焼け
-            else targetColor = Color.white;                                            // 昼
+            if (targetElevation > 0f)
+            {
+                // 昼：日中とわかる明るさを保ちつつ、まぶしくしすぎない。曇りでも暗くしすぎない。
+                targetIntensity = Mathf.Lerp(0.8f, 0.6f, cloud);
+                // 朝夕はオレンジ寄り、日中は白
+                targetColor = targetElevation < 20f ? new Color(1f, 0.7f, 0.5f) : Color.white;
+            }
+            else
+            {
+                // 夜：低い斜光を補うため lux は高めだが、青み＋低照射角で夜と分かる。暗くなりすぎない。
+                targetIntensity = Mathf.Lerp(0.95f, 0.8f, cloud);
+                targetColor = new Color(0.6f, 0.68f, 0.9f); // 夜と分かる程度の青み
+            }
         }
 
         private void Update()
@@ -52,8 +59,8 @@ namespace JapanWeatherDemo.Weather
             curIntensity = Mathf.MoveTowards(curIntensity, targetIntensity, followSpeed * Time.deltaTime);
             curColor = Color.Lerp(curColor, targetColor, followSpeed * Time.deltaTime);
 
-            // 夜（太陽が地平線下）でも光が地図の上面に当たるよう、照射角度に下限を設ける
-            float lightPitch = Mathf.Max(curElevation, 12f);
+            // 太陽が低い/地平線下でもマップ上面に光が当たるよう、照射角度に下限を設ける
+            float lightPitch = Mathf.Max(curElevation, 30f);
             sun.transform.rotation = Quaternion.Euler(lightPitch, sunYaw, 0f);
             // HDRP は HDAdditionalLightData.intensity（Lux）が実効値。Light.intensity 直接では暗くなる。
             if (sunHD != null) sunHD.intensity = curIntensity * 100000f;
