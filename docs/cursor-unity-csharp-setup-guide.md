@@ -88,7 +88,7 @@ https://github.com/boxqkrtm/com.unity.ide.cursor.git
 3. **External Script Editor** のドロップダウンで **Cursor** を選択
    - 一覧に無い場合: **Browse...** で Cursor の実行ファイルを指定  
      通常の場所: `C:\Users\<ユーザー名>\AppData\Local\Programs\cursor\Cursor.exe`
-4. 下の **Regenerate project files** にチェックが入っていることを確認（入っていなければオン）
+4. 下の **Regenerate project files** ボタンをクリックする（`.sln` / `.csproj` を生成・更新する。初回設定時やパッケージ追加後に押す）
 
 **確認:** `Assets` 内の `.cs` ファイルをダブルクリックすると Cursor が開けば OK。
 
