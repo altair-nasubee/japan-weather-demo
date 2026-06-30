@@ -163,6 +163,17 @@ MapManager（マーカー配置・選択）
 
 ---
 
+## 開発プロセス（AI 駆動）
+
+本リポジトリの開発は **[Claude Code](https://www.anthropic.com/claude-code)**（Anthropic の CLI コーディングエージェント）を使用して進めました。
+
+- **[superpowers](https://github.com/anthropics/claude-plugins-official) プラグイン**（v6.0.3 / `anthropics/claude-plugins-official` マーケットプレイス）
+  — ブレインストーミング → 仕様 → 実装計画 → テスト駆動開発（TDD）→ サブエージェント実装、という spec-driven な開発フローを提供。`docs/development-plan.md` や `docs/superpowers/` 配下の仕様・計画書はこのワークフローの成果物です。
+- **MCP for Unity**（MCP サーバー）
+  — Claude Code から Unity エディタを直接操作（シーン構築・コンポーネント配線・コンソール確認・EditMode テスト実行など）するために使用。
+
+---
+
 ## 開発環境構築手順
 
 - UnityとWindows版Claude Codeのインストールおよび開発環境構築手順： [docs/unity-wsl-claudecode-setup-guide.md](docs/unity-wsl-claudecode-setup-guide.md)
