@@ -14,9 +14,9 @@
 
 > ※ スクリーンショット / GIF はあとで追加します（`docs/images/` に配置予定）。
 
-| 地図と都市マーカー | 天気エフェクト（雨／雲） | タイムライン再生 |
+| 地図と都市マーカー | 天気エフェクト（雨） | タイムライン再生 |
 |---|---|---|
-| ![地図とマーカー](docs/images/city-markers-image.png) | [降水エフェクト](docs/images/rain-effect-image.png) | ![タイムライン](docs/images/weather-timeline.gif) |
+| ![地図とマーカー](docs/images/city-markers-image.png) | ![降水エフェクト](docs/images/rain-effect-image.png) | ![タイムライン](docs/images/weather-timeline.gif) |
 
 ---
 
